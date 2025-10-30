@@ -1,0 +1,1176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lovercraft Skindex - Community Gallery</title>
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Inter:wght@300;400;500;600&family=Uncial+Antiqua&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Core Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.4.3/echarts.min.js"></script>
+    <script src="https://unpkg.com/splitting@1.0.6/dist/splitting.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/splitting@1.0.6/dist/splitting.css">
+    
+    <style>
+        :root {
+            --deep-void: #0a0a0a;
+            --eldritch-purple: #2d1b3d;
+            --ancient-gold: #d4af37;
+            --mystic-silver: #c0c0c0;
+            --blood-crimson: #8b0000;
+            --ghost-white: #f8f8ff;
+            --shadow-gray: #2a2a2a;
+            --cosmic-teal: #008b8b;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--deep-void);
+            color: var(--ghost-white);
+            overflow-x: hidden;
+        }
+        
+        .font-cinzel { font-family: 'Cinzel', serif; }
+        .font-uncial { font-family: 'Uncial Antiqua', cursive; }
+        
+        .bg-eldritch { background: linear-gradient(135deg, var(--eldritch-purple), var(--shadow-gray)); }
+        .bg-deep-void { background: var(--deep-void); }
+        .text-ancient-gold { color: var(--ancient-gold); }
+        .text-mystic-silver { color: var(--mystic-silver); }
+        .text-cosmic-teal { color: var(--cosmic-teal); }
+        .border-ancient-gold { border-color: var(--ancient-gold); }
+        
+        .glass-card {
+            background: rgba(45, 27, 61, 0.3);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(212, 175, 55, 0.2);
+        }
+        
+        .hover-lift {
+            transition: all 0.3s ease;
+        }
+        
+        .hover-lift:hover {
+            transform: translateY(-5px) rotateX(5deg);
+            box-shadow: 0 20px 40px rgba(212, 175, 55, 0.2);
+        }
+        
+        .particle-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+        
+        .scroll-reveal {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.6s ease;
+        }
+        
+        .scroll-reveal.revealed {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+        
+        .gallery-item {
+            position: relative;
+            overflow: hidden;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .gallery-item:hover {
+            transform: scale(1.02);
+        }
+        
+        .gallery-item img {
+            width: 100%;
+            height: 250px;
+            object-fit: cover;
+            transition: all 0.3s ease;
+        }
+        
+        .gallery-item:hover img {
+            transform: scale(1.1);
+        }
+        
+        .gallery-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(transparent, rgba(10, 10, 10, 0.9));
+            padding: 1.5rem;
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
+        }
+        
+        .gallery-item:hover .gallery-overlay {
+            transform: translateY(0);
+        }
+        
+        .engagement-bar {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-top: 0.5rem;
+        }
+        
+        .engagement-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        
+        .engagement-btn:hover {
+            background: rgba(212, 175, 55, 0.2);
+        }
+        
+        .engagement-btn.active {
+            background: var(--ancient-gold);
+            color: var(--deep-void);
+        }
+        
+        .challenge-card {
+            background: linear-gradient(135deg, var(--eldritch-purple), var(--shadow-gray));
+            border: 2px solid var(--ancient-gold);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .challenge-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(212, 175, 55, 0.1), transparent);
+            animation: shimmer 3s infinite;
+        }
+        
+        @keyframes shimmer {
+            0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+            100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+        }
+        
+        .upload-zone {
+            border: 2px dashed rgba(212, 175, 55, 0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .upload-zone:hover {
+            border-color: var(--ancient-gold);
+            background: rgba(212, 175, 55, 0.1);
+        }
+        
+        .upload-zone.dragover {
+            border-color: var(--cosmic-teal);
+            background: rgba(0, 139, 139, 0.1);
+        }
+        
+        .modal-overlay {
+            background: rgba(10, 10, 10, 0.8);
+            backdrop-filter: blur(5px);
+        }
+        
+        .notification-toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+        }
+        
+        .notification-toast.show {
+            transform: translateX(0);
+        }
+        
+        .tab-active {
+            background: var(--ancient-gold);
+            color: var(--deep-void);
+        }
+        
+        .filter-active {
+            background: var(--cosmic-teal);
+            color: var(--ghost-white);
+        }
+        
+        .masonry-grid {
+            column-count: 3;
+            column-gap: 1.5rem;
+        }
+        
+        @media (max-width: 1024px) {
+            .masonry-grid { column-count: 2; }
+        }
+        
+        @media (max-width: 640px) {
+            .masonry-grid { column-count: 1; }
+        }
+        
+        .masonry-item {
+            break-inside: avoid;
+            margin-bottom: 1.5rem;
+        }
+        
+        .story-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: 3px solid var(--ancient-gold);
+            padding: 2px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .story-avatar:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 20px rgba(212, 175, 55, 0.5);
+        }
+        
+        .story-ring {
+            background: linear-gradient(45deg, var(--ancient-gold), var(--cosmic-teal));
+            padding: 3px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+        
+        .trending-badge {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: var(--blood-crimson);
+            color: var(--ghost-white);
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .comment-input {
+            background: var(--shadow-gray);
+            border: 1px solid var(--mystic-silver);
+            border-radius: 20px;
+            padding: 8px 16px;
+            color: var(--ghost-white);
+            width: 100%;
+        }
+        
+        .comment-input:focus {
+            outline: none;
+            border-color: var(--ancient-gold);
+        }
+    </style>
+</head>
+<body>
+    <!-- Particle Background -->
+    <div id="particle-bg" class="particle-bg"></div>
+    
+    <!-- Navigation Header -->
+    <nav class="fixed top-0 left-0 right-0 z-50 glass-card">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center space-x-4">
+                    <div class="font-cinzel text-2xl font-bold text-ancient-gold">
+                        Lovercraft Skindex
+                    </div>
+                    <div class="hidden md:block text-sm text-mystic-silver">
+                        Collector's Hub
+                    </div>
+                </div>
+                
+                <div class="hidden md:flex items-center space-x-8">
+                    <a href="index.html" class="text-mystic-silver hover:text-ancient-gold transition-colors">
+                        Dashboard
+                    </a>
+                    <a href="leaderboard.html" class="text-mystic-silver hover:text-ancient-gold transition-colors">
+                        Leaderboard
+                    </a>
+                    <a href="trade-center.html" class="text-mystic-silver hover:text-ancient-gold transition-colors">
+                        Trade Center
+                    </a>
+                    <a href="community-gallery.html" class="text-ancient-gold font-medium border-b-2 border-ancient-gold pb-1">
+                        Gallery
+                    </a>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <div class="flex items-center space-x-2">
+                        <img src="resources/user-avatar-1.jpg" alt="Profile" class="w-8 h-8 rounded-full border-2 border-ancient-gold">
+                        <span class="hidden md:block text-mystic-silver">Collector_Kane</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Hero Section -->
+    <section class="pt-24 pb-12 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-8">
+                <h1 class="font-cinzel text-5xl font-bold text-ancient-gold mb-4">
+                    Community Gallery
+                </h1>
+                <p class="text-xl text-mystic-silver max-w-2xl mx-auto">
+                    Showcase your rarest finds, share collection highlights, and connect with fellow collectors. 
+                    Every skin tells a story - share yours with the community.
+                </p>
+            </div>
+            
+            <!-- Quick Stats -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                <div class="glass-card rounded-lg p-6 text-center hover-lift scroll-reveal">
+                    <div class="text-3xl font-bold text-ancient-gold mb-2">2,847</div>
+                    <div class="text-mystic-silver">Community Posts</div>
+                    <div class="text-sm text-cosmic-teal mt-1">+156 this week</div>
+                </div>
+                <div class="glass-card rounded-lg p-6 text-center hover-lift scroll-reveal">
+                    <div class="text-3xl font-bold text-ancient-gold mb-2">1,234</div>
+                    <div class="text-mystic-silver">Your Shares</div>
+                    <div class="text-sm text-cosmic-teal mt-1">45 likes this month</div>
+                </div>
+                <div class="glass-card rounded-lg p-6 text-center hover-lift scroll-reveal">
+                    <div class="text-3xl font-bold text-ancient-gold mb-2">89</div>
+                    <div class="text-mystic-silver">Following</div>
+                    <div class="text-sm text-cosmic-teal mt-1">12 new this week</div>
+                </div>
+                <div class="glass-card rounded-lg p-6 text-center hover-lift scroll-reveal">
+                    <div class="text-3xl font-bold text-ancient-gold mb-2">456</div>
+                    <div class="text-mystic-silver">Followers</div>
+                    <div class="text-sm text-cosmic-teal mt-1">+23 this month</div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            
+            <!-- Left Sidebar -->
+            <div class="lg:col-span-1">
+                <div class="space-y-6">
+                    
+                    <!-- Stories/Highlights -->
+                    <div class="glass-card rounded-lg p-6">
+                        <h3 class="font-cinzel text-lg font-bold text-ancient-gold mb-4">Stories</h3>
+                        <div class="flex space-x-3 overflow-x-auto pb-2">
+                            <div class="text-center">
+                                <div class="story-ring mb-2">
+                                    <img src="resources/user-avatar-1.jpg" alt="Your Story" class="story-avatar">
+                                </div>
+                                <div class="text-xs text-mystic-silver">Your Story</div>
+                            </div>
+                            <div class="text-center">
+                                <div class="story-ring mb-2">
+                                    <img src="resources/user-avatar-2.jpg" alt="EldritchMaster" class="story-avatar">
+                                </div>
+                                <div class="text-xs text-mystic-silver">Eldritch</div>
+                            </div>
+                            <div class="text-center">
+                                <div class="story-ring mb-2">
+                                    <img src="resources/user-avatar-3.jpg" alt="CosmicCollector" class="story-avatar">
+                                </div>
+                                <div class="text-xs text-mystic-silver">Cosmic</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Quick Actions -->
+                    <div class="glass-card rounded-lg p-6">
+                        <h3 class="font-cinzel text-lg font-bold text-ancient-gold mb-4">Share Your Collection</h3>
+                        <div class="space-y-3">
+                            <button onclick="openUploadModal()" class="w-full bg-ancient-gold hover:bg-ancient-gold/80 text-deep-void px-4 py-3 rounded font-medium transition-colors">
+                                📸 Upload Photo
+                            </button>
+                            <button onclick="showNotification('Story feature coming soon!', 'info')" class="w-full bg-cosmic-teal hover:bg-cosmic-teal/80 text-ghost-white px-4 py-3 rounded font-medium transition-colors">
+                                📖 Add to Story
+                            </button>
+                            <button onclick="showNotification('Challenge joined!', 'success')" class="w-full bg-shadow-gray hover:bg-mystic-silver/20 text-ghost-white px-4 py-3 rounded font-medium transition-colors">
+                                🏆 Join Challenge
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Active Challenges -->
+                    <div class="glass-card rounded-lg p-6">
+                        <h3 class="font-cinzel text-lg font-bold text-ancient-gold mb-4">Active Challenges</h3>
+                        <div class="space-y-3">
+                            <div class="challenge-card rounded-lg p-4">
+                                <h4 class="font-medium text-ancient-gold mb-2">#MysticMashup</h4>
+                                <p class="text-sm text-mystic-silver mb-3">Combine 3+ mythic items in one screenshot</p>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-xs text-ghost-white">234 participants</span>
+                                    <span class="text-xs text-cosmic-teal">2 days left</span>
+                                </div>
+                            </div>
+                            
+                            <div class="glass-card rounded-lg p-4">
+                                <h4 class="font-medium text-ancient-gold mb-2">#PurgePerfection</h4>
+                                <p class="text-sm text-mystic-silver mb-3">Show off your complete purge collection</p>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-xs text-ghost-white">156 participants</span>
+                                    <span class="text-xs text-cosmic-teal">5 days left</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Top Contributors -->
+                    <div class="glass-card rounded-lg p-6">
+                        <h3 class="font-cinzel text-lg font-bold text-ancient-gold mb-4">Top Contributors</h3>
+                        <div class="space-y-3">
+                            <div class="flex items-center space-x-3">
+                                <img src="resources/user-avatar-2.jpg" alt="EldritchMaster" class="w-8 h-8 rounded-full border border-ancient-gold">
+                                <div class="flex-1">
+                                    <div class="text-sm text-ghost-white font-medium">EldritchMaster</div>
+                                    <div class="text-xs text-mystic-silver">2.3k posts • 4.9⭐</div>
+                                </div>
+                            </div>
+                            <div class="flex items-center space-x-3">
+                                <img src="resources/user-avatar-3.jpg" alt="CosmicCollector" class="w-8 h-8 rounded-full border border-ancient-gold">
+                                <div class="flex-1">
+                                    <div class="text-sm text-ghost-white font-medium">CosmicCollector</div>
+                                    <div class="text-xs text-mystic-silver">1.8k posts • 4.8⭐</div>
+                                </div>
+                            </div>
+                            <div class="flex items-center space-x-3">
+                                <img src="resources/user-avatar-1.jpg" alt="MysticArchivist" class="w-8 h-8 rounded-full border border-ancient-gold">
+                                <div class="flex-1">
+                                    <div class="text-sm text-ghost-white font-medium">MysticArchivist</div>
+                                    <div class="text-xs text-mystic-silver">1.5k posts • 4.7⭐</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Main Gallery Feed -->
+            <div class="lg:col-span-3">
+                <!-- Filter Tabs -->
+                <div class="flex items-center justify-between mb-6">
+                    <div class="flex space-x-2">
+                        <button class="gallery-filter tab-active px-4 py-2 rounded text-sm font-medium transition-colors" data-filter="all">
+                            All Posts
+                        </button>
+                        <button class="gallery-filter px-4 py-2 rounded text-sm font-medium hover:bg-ancient-gold/20 transition-colors" data-filter="trending">
+                            🔥 Trending
+                        </button>
+                        <button class="gallery-filter px-4 py-2 rounded text-sm font-medium hover:bg-ancient-gold/20 transition-colors" data-filter="following">
+                            👥 Following
+                        </button>
+                        <button class="gallery-filter px-4 py-2 rounded text-sm font-medium hover:bg-ancient-gold/20 transition-colors" data-filter="challenges">
+                            🏆 Challenges
+                        </button>
+                    </div>
+                    
+                    <div class="flex items-center space-x-4">
+                        <div class="text-mystic-silver text-sm">
+                            Showing <span id="showing-posts">24</span> of <span id="total-posts">2,847</span> posts
+                        </div>
+                        <select id="sort-posts" class="bg-shadow-gray text-ghost-white px-3 py-2 rounded border border-mystic-silver/20 focus:border-ancient-gold focus:outline-none">
+                            <option value="newest">Newest First</option>
+                            <option value="popular">Most Popular</option>
+                            <option value="likes">Most Liked</option>
+                            <option value="comments">Most Discussed</n                        </select>
+                    </div>
+                </div>
+                
+                <!-- Gallery Grid -->
+                <div id="gallery-grid" class="masonry-grid">
+                    <!-- Gallery items will be dynamically generated here -->
+                </div>
+                
+                <!-- Load More Button -->
+                <div class="text-center mt-8">
+                    <button id="load-more-posts" class="bg-shadow-gray hover:bg-mystic-silver/20 text-ghost-white px-6 py-3 rounded transition-colors">
+                        Load More Posts
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+    
+    <!-- Upload Modal -->
+    <div id="upload-modal" class="fixed inset-0 z-50 hidden modal-overlay">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="glass-card rounded-lg p-6 w-full max-w-2xl">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="font-cinzel text-2xl font-bold text-ancient-gold">Share Your Collection</h3>
+                    <button onclick="closeUploadModal()" class="text-mystic-silver hover:text-ghost-white text-xl">
+                        ✕
+                    </button>
+                </div>
+                
+                <div class="space-y-6">
+                    <!-- Upload Zone -->
+                    <div class="upload-zone rounded-lg p-8 text-center cursor-pointer" onclick="document.getElementById('photo-upload').click()">
+                        <div class="text-4xl text-mystic-silver mb-4">📸</div>
+                        <div class="text-mystic-silver font-medium mb-2">Click to upload or drag & drop</div>
+                        <div class="text-sm text-mystic-silver/60">Supports JPG, PNG up to 10MB</div>
+                        <input type="file" id="photo-upload" accept="image/*" class="hidden">
+                    </div>
+                    
+                    <!-- Preview -->
+                    <div id="photo-preview" class="hidden">
+                        <img id="preview-image" src="" alt="Preview" class="w-full max-h-64 object-cover rounded-lg">
+                    </div>
+                    
+                    <!-- Caption -->
+                    <div>
+                        <label class="block text-mystic-silver text-sm mb-2">Caption</label>
+                        <textarea id="photo-caption" rows="3" class="w-full bg-shadow-gray text-ghost-white px-4 py-3 rounded border border-mystic-silver/20 focus:border-ancient-gold focus:outline-none" placeholder="Tell the story behind your collection..."></textarea>
+                    </div>
+                    
+                    <!-- Tags -->
+                    <div>
+                        <label class="block text-mystic-silver text-sm mb-2">Tags</label>
+                        <input type="text" id="photo-tags" class="w-full bg-shadow-gray text-ghost-white px-4 py-3 rounded border border-mystic-silver/20 focus:border-ancient-gold focus:outline-none" placeholder="#rarefind #mythicset #collectiongoals">
+                    </div>
+                    
+                    <!-- Challenge Participation -->
+                    <div>
+                        <label class="block text-mystic-silver text-sm mb-2">Participate in Challenge</label>
+                        <select id="challenge-select" class="w-full bg-shadow-gray text-ghost-white px-4 py-3 rounded border border-mystic-silver/20 focus:border-ancient-gold focus:outline-none">
+                            <option value="">No Challenge</option>
+                            <option value="mystic-mashup">#MysticMashup</option>
+                            <option value="purge-perfection">#PurgePerfection</option>
+                            <option value="vip-showcase">#VIPShowcase</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="flex space-x-3 mt-8">
+                    <button onclick="submitPost()" class="flex-1 bg-ancient-gold hover:bg-ancient-gold/80 text-deep-void px-6 py-3 rounded font-medium transition-colors">
+                        Share Post
+                    </button>
+                    <button onclick="closeUploadModal()" class="flex-1 bg-shadow-gray hover:bg-mystic-silver/20 text-ghost-white px-6 py-3 rounded font-medium transition-colors">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Post Details Modal -->
+    <div id="post-modal" class="fixed inset-0 z-50 hidden modal-overlay">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="glass-card rounded-lg p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="font-cinzel text-2xl font-bold text-ancient-gold">Post Details</h3>
+                    <button onclick="closePostModal()" class="text-mystic-silver hover:text-ghost-white text-xl">
+                        ✕
+                    </button>
+                </div>
+                
+                <div id="post-content">
+                    <!-- Post content will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Notification Toast -->
+    <div id="notification-toast" class="notification-toast glass-card rounded-lg p-4">
+        <div class="flex items-center space-x-3">
+            <div id="notification-icon" class="text-2xl">🎉</div>
+            <div>
+                <div id="notification-title" class="font-medium text-ghost-white">Post Shared!</div>
+                <div id="notification-message" class="text-sm text-mystic-silver">Your collection photo has been posted</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Footer -->
+    <footer class="bg-shadow-gray/50 border-t border-mystic-silver/20 py-8 mt-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <div class="font-cinzel text-ancient-gold text-lg mb-2">Lovercraft Skindex</div>
+            <div class="text-mystic-silver text-sm">
+                © 2024 Lovercraft Skindex. All rights reserved. Share your passion, inspire others.
+            </div>
+        </div>
+    </footer>
+    
+    <script>
+        // Gallery specific functionality
+        const GalleryApp = {
+            currentFilter: 'all',
+            selectedFile: null,
+            
+            mockPosts: [
+                {
+                    id: 'post_001',
+                    author: 'EldritchMaster',
+                    avatar: 'resources/user-avatar-2.jpg',
+                    image: 'resources/eldritch-symbols.jpg',
+                    caption: 'Finally completed my mythic collection! The combination of these ancient artifacts feels incredibly powerful. Which one is your favorite? 🔥',
+                    tags: ['#mythicset', '#collectioncomplete', '#ancientartifacts'],
+                    likes: 234,
+                    comments: 45,
+                    timestamp: '2 hours ago',
+                    challenge: 'mystic-mashup',
+                    isLiked: false,
+                    isTrending: true
+                },
+                {
+                    id: 'post_002',
+                    author: 'CosmicCollector',
+                    avatar: 'resources/user-avatar-3.jpg',
+                    image: 'resources/cosmic-particles.jpg',
+                    caption: 'The cosmic theme in Season 5 is absolutely stunning! These particle effects make everything feel so ethereal ✨',
+                    tags: ['#season5', '#cosmic', '#particleeffects'],
+                    likes: 189,
+                    comments: 23,
+                    timestamp: '4 hours ago',
+                    challenge: '',
+                    isLiked: true,
+                    isTrending: false
+                },
+                {
+                    id: 'post_003',
+                    author: 'MysticArchivist',
+                    avatar: 'resources/user-avatar-1.jpg',
+                    image: 'resources/hero-bg.jpg',
+                    caption: 'My humble purge mask collection. Still looking for the elusive Purge5 White - anyone willing to trade? 🤝',
+                    tags: ['#purge', '#maskcollection', 'trading'],
+                    likes: 156,
+                    comments: 67,
+                    timestamp: '6 hours ago',
+                    challenge: 'purge-perfection',
+                    isLiked: false,
+                    isTrending: false
+                },
+                {
+                    id: 'post_004',
+                    author: 'AncientHunter',
+                    avatar: 'resources/user-avatar-2.jpg',
+                    image: 'resources/skin-placeholder.jpg',
+                    caption: 'The attention to detail in these VIP seasonal items is incredible! Every piece tells a story 🏛️',
+                    tags: ['#vip', '#seasonal', '#detailedwork'],
+                    likes: 298,
+                    comments: 34,
+                    timestamp: '8 hours ago',
+                    challenge: '',
+                    isLiked: true,
+                    isTrending: true
+                },
+                {
+                    id: 'post_005',
+                    author: 'VoidWalker',
+                    avatar: 'resources/user-avatar-3.jpg',
+                    image: 'resources/achievement-badge.png',
+                    caption: 'Achievement unlocked: Trade Master! 50 successful trades and counting. The Lovercraft community is amazing! 🎉',
+                    tags: ['#achievement', '#trademaster', '#community'],
+                    likes: 412,
+                    comments: 89,
+                    timestamp: '12 hours ago',
+                    challenge: '',
+                    isLiked: false,
+                    isTrending: true
+                },
+                {
+                    id: 'post_006',
+                    author: 'DreamSeeker',
+                    avatar: 'resources/user-avatar-1.jpg',
+                    image: 'resources/verification-icon.png',
+                    caption: 'Verification day! All 23 items verified successfully. The verification streak continues! ✅',
+                    tags: ['#verification', '#streak', '#trust'],
+                    likes: 167,
+                    comments: 12,
+                    timestamp: '1 day ago',
+                    challenge: '',
+                    isLiked: false,
+                    isTrending: false
+                }
+            ]
+        };
+        
+        // Initialize gallery
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeGallery();
+        });
+        
+        function initializeGallery() {
+            setupParticleBackground();
+            setupEventListeners();
+            renderGallery();
+            setupScrollReveal();
+            setupDragAndDrop();
+        }
+        
+        function setupParticleBackground() {
+            new p5(function(p) {
+                let particles = [];
+                let numParticles = 35;
+                
+                p.setup = function() {
+                    let canvas = p.createCanvas(p.windowWidth, p.windowHeight);
+                    canvas.parent('particle-bg');
+                    canvas.style('position', 'fixed');
+                    canvas.style('top', '0');
+                    canvas.style('left', '0');
+                    canvas.style('z-index', '-1');
+                    
+                    for (let i = 0; i < numParticles; i++) {
+                        particles.push({
+                            x: p.random(p.width),
+                            y: p.random(p.height),
+                            vx: p.random(-0.3, 0.3),
+                            vy: p.random(-0.3, 0.3),
+                            size: p.random(1, 2),
+                            opacity: p.random(0.1, 0.2)
+                        });
+                    }
+                };
+                
+                p.draw = function() {
+                    p.clear();
+                    
+                    for (let particle of particles) {
+                        particle.x += particle.vx;
+                        particle.y += particle.vy;
+                        
+                        if (particle.x < 0) particle.x = p.width;
+                        if (particle.x > p.width) particle.x = 0;
+                        if (particle.y < 0) particle.y = p.height;
+                        if (particle.y > p.height) particle.y = 0;
+                        
+                        p.fill(212, 175, 55, particle.opacity * 255);
+                        p.noStroke();
+                        p.circle(particle.x, particle.y, particle.size);
+                    }
+                };
+                
+                p.windowResized = function() {
+                    p.resizeCanvas(p.windowWidth, p.windowHeight);
+                };
+            });
+        }
+        
+        function setupEventListeners() {
+            // Filter tabs
+            document.querySelectorAll('.gallery-filter').forEach(filter => {
+                filter.addEventListener('click', handleFilterChange);
+            });
+            
+            // Sort dropdown
+            document.getElementById('sort-posts')?.addEventListener('change', handleSortChange);
+            
+            // Load more button
+            document.getElementById('load-more-posts')?.addEventListener('click', loadMorePosts);
+            
+            // Photo upload
+            document.getElementById('photo-upload')?.addEventListener('change', handlePhotoUpload);
+        }
+        
+        function setupDragAndDrop() {
+            const uploadZone = document.querySelector('.upload-zone');
+            if (!uploadZone) return;
+            
+            uploadZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadZone.classList.add('dragover');
+            });
+            
+            uploadZone.addEventListener('dragleave', () => {
+                uploadZone.classList.remove('dragover');
+            });
+            
+            uploadZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadZone.classList.remove('dragover');
+                
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    handleFileUpload(files[0]);
+                }
+            });
+        }
+        
+        function handleFilterChange(event) {
+            document.querySelectorAll('.gallery-filter').forEach(filter => {
+                filter.classList.remove('tab-active');
+            });
+            
+            event.target.classList.add('tab-active');
+            GalleryApp.currentFilter = event.target.dataset.filter;
+            renderGallery();
+        }
+        
+        function handleSortChange(event) {
+            renderGallery();
+        }
+        
+        function renderGallery() {
+            const galleryGrid = document.getElementById('gallery-grid');
+            if (!galleryGrid) return;
+            
+            let posts = [...GalleryApp.mockPosts];
+            
+            // Apply filter
+            if (GalleryApp.currentFilter === 'trending') {
+                posts = posts.filter(post => post.isTrending);
+            } else if (GalleryApp.currentFilter === 'challenges') {
+                posts = posts.filter(post => post.challenge);
+            }
+            
+            // Apply sort
+            const sortBy = document.getElementById('sort-posts')?.value || 'newest';
+            posts.sort((a, b) => {
+                switch (sortBy) {
+                    case 'popular':
+                        return b.likes - a.likes;
+                    case 'likes':
+                        return b.likes - a.likes;
+                    case 'comments':
+                        return b.comments - a.comments;
+                    default:
+                        return 0; // Already sorted by timestamp
+                }
+            });
+            
+            galleryGrid.innerHTML = '';
+            
+            posts.forEach((post, index) => {
+                const postElement = createGalleryPost(post, index);
+                galleryGrid.appendChild(postElement);
+            });
+            
+            // Animate posts
+            anime({
+                targets: '.masonry-item',
+                opacity: [0, 1],
+                translateY: [30, 0],
+                delay: anime.stagger(100),
+                duration: 600,
+                easing: 'easeOutQuart'
+            });
+            
+            updatePostCounts();
+        }
+        
+        function createGalleryPost(post, index) {
+            const postElement = document.createElement('div');
+            postElement.className = 'masonry-item glass-card rounded-lg overflow-hidden hover-lift';
+            
+            const likeClass = post.isLiked ? 'engagement-btn active' : 'engagement-btn';
+            const trendingBadge = post.isTrending ? '<div class="trending-badge">🔥 TRENDING</div>' : '';
+            
+            postElement.innerHTML = `
+                <div class="gallery-item" onclick="openPostModal('${post.id}')">
+                    <img src="${post.image}" alt="${post.caption}" loading="lazy">
+                    ${trendingBadge}
+                    <div class="gallery-overlay">
+                        <div class="flex items-center space-x-3 mb-3">
+                            <img src="${post.avatar}" alt="${post.author}" class="w-8 h-8 rounded-full border border-ancient-gold">
+                            <div>
+                                <div class="font-medium text-ghost-white">${post.author}</div>
+                                <div class="text-xs text-mystic-silver">${post.timestamp}</div>
+                            </div>
+                        </div>
+                        <p class="text-sm text-ghost-white mb-3 line-clamp-2">${post.caption}</p>
+                        <div class="engagement-bar">
+                            <div class="engagement-btn ${likeClass}" onclick="event.stopPropagation(); toggleLike('${post.id}')">
+                                <span>${post.isLiked ? '❤️' : '🤍'}</span>
+                                <span>${post.likes}</span>
+                            </div>
+                            <div class="engagement-btn" onclick="event.stopPropagation(); openPostModal('${post.id}')">
+                                <span>💬</span>
+                                <span>${post.comments}</span>
+                            </div>
+                            <div class="engagement-btn" onclick="event.stopPropagation(); sharePost('${post.id}')">
+                                <span>📤</span>
+                                <span>Share</span>
+                            </div>
+                        </div>
+                        ${post.challenge ? `
+                            <div class="mt-2 text-xs text-cosmic-teal">
+                                Participating in #${post.challenge.replace('-', '')}
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+            
+            return postElement;
+        }
+        
+        function openPostModal(postId) {
+            const post = GalleryApp.mockPosts.find(p => p.id === postId);
+            if (!post) return;
+            
+            const modal = document.getElementById('post-modal');
+            const content = document.getElementById('post-content');
+            
+            if (!modal || !content) return;
+            
+            content.innerHTML = `
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <!-- Image Section -->
+                    <div>
+                        <img src="${post.image}" alt="${post.caption}" class="w-full rounded-lg">
+                    </div>
+                    
+                    <!-- Details Section -->
+                    <div>
+                        <div class="flex items-center space-x-3 mb-4">
+                            <img src="${post.avatar}" alt="${post.author}" class="w-12 h-12 rounded-full border-2 border-ancient-gold">
+                            <div>
+                                <h3 class="font-cinzel text-lg font-bold text-ancient-gold">${post.author}</h3>
+                                <div class="text-sm text-mystic-silver">${post.timestamp}</div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-6">
+                            <p class="text-ghost-white mb-3">${post.caption}</p>
+                            <div class="flex flex-wrap gap-2">
+                                ${post.tags.map(tag => `
+                                    <span class="text-xs text-cosmic-teal bg-cosmic-teal/20 px-2 py-1 rounded">${tag}</span>
+                                `).join('')}
+                            </div>
+                        </div>
+                        
+                        <div class="engagement-bar mb-6">
+                            <div class="engagement-btn ${post.isLiked ? 'active' : ''}" onclick="toggleLike('${post.id}')">
+                                <span>${post.isLiked ? '❤️' : '🤍'}</span>
+                                <span>${post.likes} likes</span>
+                            </div>
+                            <div class="engagement-btn" onclick="sharePost('${post.id}')">
+                                <span>📤</span>
+                                <span>Share</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Comments Section -->
+                        <div class="border-t border-mystic-silver/20 pt-4">
+                            <h4 class="text-mystic-silver font-medium mb-4">Comments (${post.comments})</h4>
+                            <div class="space-y-3 mb-4 max-h-64 overflow-y-auto">
+                                <div class="flex space-x-3">
+                                    <img src="resources/user-avatar-2.jpg" alt="User" class="w-8 h-8 rounded-full">
+                                    <div class="flex-1">
+                                        <div class="text-sm text-ghost-white font-medium">EldritchMaster</div>
+                                        <div class="text-sm text-mystic-silver">Absolutely stunning collection! 🔥</div>
+                                        <div class="text-xs text-mystic-silver/60">2 hours ago</div>
+                                    </div>
+                                </div>
+                                <div class="flex space-x-3">
+                                    <img src="resources/user-avatar-3.jpg" alt="User" class="w-8 h-8 rounded-full">
+                                    <div class="flex-1">
+                                        <div class="text-sm text-ghost-white font-medium">CosmicCollector</div>
+                                        <div class="text-sm text-mystic-silver">Would love to trade for that mythic piece!</div>
+                                        <div class="text-xs text-mystic-silver/60">4 hours ago</div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="flex space-x-3">
+                                <img src="resources/user-avatar-1.jpg" alt="You" class="w-8 h-8 rounded-full">
+                                <input type="text" placeholder="Add a comment..." class="comment-input">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            modal.classList.remove('hidden');
+            
+            anime({
+                targets: modal.querySelector('.glass-card'),
+                scale: [0.8, 1],
+                opacity: [0, 1],
+                duration: 300,
+                easing: 'easeOutQuart'
+            });
+        }
+        
+        function closePostModal() {
+            const modal = document.getElementById('post-modal');
+            if (modal) {
+                modal.classList.add('hidden');
+            }
+        }
+        
+        function openUploadModal() {
+            const modal = document.getElementById('upload-modal');
+            if (modal) {
+                modal.classList.remove('hidden');
+                
+                anime({
+                    targets: modal.querySelector('.glass-card'),
+                    scale: [0.8, 1],
+                    opacity: [0, 1],
+                    duration: 300,
+                    easing: 'easeOutQuart'
+                });
+            }
+        }
+        
+        function closeUploadModal() {
+            const modal = document.getElementById('upload-modal');
+            if (modal) {
+                modal.classList.add('hidden');
+            }
+            
+            // Reset form
+            GalleryApp.selectedFile = null;
+            document.getElementById('photo-preview').classList.add('hidden');
+            document.getElementById('photo-caption').value = '';
+            document.getElementById('photo-tags').value = '';
+            document.getElementById('challenge-select').value = '';
+        }
+        
+        function handlePhotoUpload(event) {
+            const file = event.target.files[0];
+            if (file) {
+                handleFileUpload(file);
+            }
+        }
+        
+        function handleFileUpload(file) {
+            if (!file.type.startsWith('image/')) {
+                showNotification('Please select an image file', 'error');
+                return;
+            }
+            
+            if (file.size > 10 * 1024 * 1024) {
+                showNotification('File size must be less than 10MB', 'error');
+                return;
+            }
+            
+            GalleryApp.selectedFile = file;
+            
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                document.getElementById('preview-image').src = e.target.result;
+                document.getElementById('photo-preview').classList.remove('hidden');
+            };
+            reader.readAsDataURL(file);
+        }
+        
+        function submitPost() {
+            if (!GalleryApp.selectedFile) {
+                showNotification('Please select an image to upload', 'error');
+                return;
+            }
+            
+            const caption = document.getElementById('photo-caption').value.trim();
+            if (!caption) {
+                showNotification('Please add a caption', 'error');
+                return;
+            }
+            
+            const tags = document.getElementById('photo-tags').value;
+            const challenge = document.getElementById('challenge-select').value;
+            
+            // Create new post object
+            const newPost = {
+                id: `post_${Date.now()}`,
+                author: 'Collector_Kane',
+                avatar: 'resources/user-avatar-1.jpg',
+                image: URL.createObjectURL(GalleryApp.selectedFile),
+                caption: caption,
+                tags: tags.split(' ').filter(tag => tag.startsWith('#')),
+                likes: 0,
+                comments: 0,
+                timestamp: 'Just now',
+                challenge: challenge,
+                isLiked: false,
+                isTrending: false
+            };
+            
+            // Add to posts array
+            GalleryApp.mockPosts.unshift(newPost);
+            
+            showNotification('Photo shared successfully!', 'success');
+            closeUploadModal();
+            renderGallery();
+        }
+        
+        function toggleLike(postId) {
+            const post = GalleryApp.mockPosts.find(p => p.id === postId);
+            if (!post) return;
+            
+            post.isLiked = !post.isLiked;
+            post.likes += post.isLiked ? 1 : -1;
+            
+            renderGallery();
+            
+            const message = post.isLiked ? 'Post liked!' : 'Post unliked';
+            showNotification(message, 'success');
+        }
+        
+        function sharePost(postId) {
+            showNotification('Post shared to your profile!', 'success');
+        }
+        
+        function loadMorePosts() {
+            showNotification('Loading more posts...', 'info');
+            // This would load additional posts in a real implementation
+        }
+        
+        function updatePostCounts() {
+            const showingElement = document.getElementById('showing-posts');
+            const totalElement = document.getElementById('total-posts');
+            
+            if (showingElement) showingElement.textContent = GalleryApp.mockPosts.length;
+            if (totalElement) totalElement.textContent = '2,847';
+        }
+        
+        function setupScrollReveal() {
+            const observerOptions = {
+                threshold: 0.1,
+                rootMargin: '0px 0px -50px 0px'
+            };
+            
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('revealed');
+                    }
+                });
+            }, observerOptions);
+            
+            document.querySelectorAll('.scroll-reveal').forEach(el => {
+                observer.observe(el);
+            });
+        }
+        
+        function showNotification(message, type = 'info') {
+            // Reuse the notification system from main.js
+            if (window.LovercraftSkindex && window.LovercraftSkindex.showNotification) {
+                window.LovercraftSkindex.showNotification(message, type);
+            } else {
+                console.log(`${type.toUpperCase()}: ${message}`);
+            }
+        }
+        
+        console.log('Community Gallery initialized successfully');
+    </script>
+    
+    <script src="main.js"></script>
+</body>
+</html>

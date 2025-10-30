@@ -1,0 +1,1214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lovercraft Skindex - Trade Center</title>
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Inter:wght@300;400;500;600&family=Uncial+Antiqua&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Core Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.4.3/echarts.min.js"></script>
+    <script src="https://unpkg.com/splitting@1.0.6/dist/splitting.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/splitting@1.0.6/dist/splitting.css">
+    
+    <style>
+        :root {
+            --deep-void: #0a0a0a;
+            --eldritch-purple: #2d1b3d;
+            --ancient-gold: #d4af37;
+            --mystic-silver: #c0c0c0;
+            --blood-crimson: #8b0000;
+            --ghost-white: #f8f8ff;
+            --shadow-gray: #2a2a2a;
+            --cosmic-teal: #008b8b;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--deep-void);
+            color: var(--ghost-white);
+            overflow-x: hidden;
+        }
+        
+        .font-cinzel { font-family: 'Cinzel', serif; }
+        .font-uncial { font-family: 'Uncial Antiqua', cursive; }
+        
+        .bg-eldritch { background: linear-gradient(135deg, var(--eldritch-purple), var(--shadow-gray)); }
+        .bg-deep-void { background: var(--deep-void); }
+        .text-ancient-gold { color: var(--ancient-gold); }
+        .text-mystic-silver { color: var(--mystic-silver); }
+        .text-cosmic-teal { color: var(--cosmic-teal); }
+        .border-ancient-gold { border-color: var(--ancient-gold); }
+        
+        .glass-card {
+            background: rgba(45, 27, 61, 0.3);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(212, 175, 55, 0.2);
+        }
+        
+        .hover-lift {
+            transition: all 0.3s ease;
+        }
+        
+        .hover-lift:hover {
+            transform: translateY(-5px) rotateX(5deg);
+            box-shadow: 0 20px 40px rgba(212, 175, 55, 0.2);
+        }
+        
+        .particle-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+        
+        .scroll-reveal {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.6s ease;
+        }
+        
+        .scroll-reveal.revealed {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .tab-active {
+            background: var(--ancient-gold);
+            color: var(--deep-void);
+        }
+        
+        .trade-card {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .trade-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.1), transparent);
+            transition: left 0.5s;
+        }
+        
+        .trade-card:hover::before {
+            left: 100%;
+        }
+        
+        .trade-status {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .status-active { background: var(--cosmic-teal); color: var(--ghost-white); }
+        .status-pending { background: var(--ancient-gold); color: var(--deep-void); }
+        .status-completed { background: var(--mystic-silver); color: var(--deep-void); }
+        .status-cancelled { background: var(--blood-crimson); color: var(--ghost-white); }
+        
+        .item-selector {
+            border: 2px dashed rgba(212, 175, 55, 0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .item-selector:hover {
+            border-color: var(--ancient-gold);
+            background: rgba(212, 175, 55, 0.1);
+        }
+        
+        .item-selected {
+            border: 2px solid var(--ancient-gold);
+            background: rgba(212, 175, 55, 0.1);
+        }
+        
+        .chat-bubble {
+            max-width: 70%;
+            word-wrap: break-word;
+        }
+        
+        .chat-bubble.sent {
+            background: var(--cosmic-teal);
+            color: var(--ghost-white);
+            margin-left: auto;
+        }
+        
+        .chat-bubble.received {
+            background: var(--shadow-gray);
+            color: var(--ghost-white);
+        }
+        
+        .reputation-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .rep-excellent { background: var(--ancient-gold); color: var(--deep-void); }
+        .rep-good { background: var(--cosmic-teal); color: var(--ghost-white); }
+        .rep-fair { background: var(--mystic-silver); color: var(--deep-void); }
+        .rep-poor { background: var(--blood-crimson); color: var(--ghost-white); }
+        
+        .typing-indicator {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 8px 12px;
+            background: var(--shadow-gray);
+            border-radius: 18px;
+            width: fit-content;
+        }
+        
+        .typing-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--mystic-silver);
+            animation: typing 1.4s infinite ease-in-out;
+        }
+        
+        .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+        .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+        
+        @keyframes typing {
+            0%, 80%, 100% { transform: scale(0); opacity: 0.5; }
+            40% { transform: scale(1); opacity: 1; }
+        }
+        
+        .notification-toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+        }
+        
+        .notification-toast.show {
+            transform: translateX(0);
+        }
+        
+        .modal-overlay {
+            background: rgba(10, 10, 10, 0.8);
+            backdrop-filter: blur(5px);
+        }
+    </style>
+</head>
+<body>
+    <!-- Particle Background -->
+    <div id="particle-bg" class="particle-bg"></div>
+    
+    <!-- Navigation Header -->
+    <nav class="fixed top-0 left-0 right-0 z-50 glass-card">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center space-x-4">
+                    <div class="font-cinzel text-2xl font-bold text-ancient-gold">
+                        Lovercraft Skindex
+                    </div>
+                    <div class="hidden md:block text-sm text-mystic-silver">
+                        Collector's Hub
+                    </div>
+                </div>
+                
+                <div class="hidden md:flex items-center space-x-8">
+                    <a href="index.html" class="text-mystic-silver hover:text-ancient-gold transition-colors">
+                        Dashboard
+                    </a>
+                    <a href="leaderboard.html" class="text-mystic-silver hover:text-ancient-gold transition-colors">
+                        Leaderboard
+                    </a>
+                    <a href="trade-center.html" class="text-ancient-gold font-medium border-b-2 border-ancient-gold pb-1">
+                        Trade Center
+                    </a>
+                    <a href="community-gallery.html" class="text-mystic-silver hover:text-ancient-gold transition-colors">
+                        Gallery
+                    </a>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <div class="flex items-center space-x-2">
+                        <img src="resources/user-avatar-1.jpg" alt="Profile" class="w-8 h-8 rounded-full border-2 border-ancient-gold">
+                        <span class="hidden md:block text-mystic-silver">Collector_Kane</span>
+                        <div class="reputation-badge rep-excellent">
+                            <span>⭐</span>
+                            <span>4.7</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Hero Section -->
+    <section class="pt-24 pb-12 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-8">
+                <h1 class="font-cinzel text-5xl font-bold text-ancient-gold mb-4">
+                    Trade Center
+                </h1>
+                <p class="text-xl text-mystic-silver max-w-2xl mx-auto">
+                    Connect with fellow collectors, negotiate trades, and expand your collection. 
+                    Safe, secure, and verified trading for the Lovercraft community.
+                </p>
+            </div>
+            
+            <!-- Quick Stats -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                <div class="glass-card rounded-lg p-6 text-center hover-lift scroll-reveal">
+                    <div class="text-3xl font-bold text-ancient-gold mb-2">1,247</div>
+                    <div class="text-mystic-silver">Active Trades</div>
+                    <div class="text-sm text-cosmic-teal mt-1">+89 today</div>
+                </div>
+                <div class="glass-card rounded-lg p-6 text-center hover-lift scroll-reveal">
+                    <div class="text-3xl font-bold text-ancient-gold mb-2">456</div>
+                    <div class="text-mystic-silver">Your Trades</div>
+                    <div class="text-sm text-cosmic-teal mt-1">23 completed this week</div>
+                </div>
+                <div class="glass-card rounded-lg p-6 text-center hover-lift scroll-reveal">
+                    <div class="text-3xl font-bold text-ancient-gold mb-2">4.7</div>
+                    <div class="text-mystic-silver">Your Rating</div>
+                    <div class="text-sm text-cosmic-teal mt-1">Based on 156 trades</div>
+                </div>
+                <div class="glass-card rounded-lg p-6 text-center hover-lift scroll-reveal">
+                    <div class="text-3xl font-bold text-ancient-gold mb-2">12</div>
+                    <div class="text-mystic-silver">Pending Offers</div>
+                    <div class="text-sm text-blood-crimson mt-1">Requires attention</div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            
+            <!-- Left Sidebar - Trade Actions -->
+            <div class="lg:col-span-1">
+                <div class="space-y-6">
+                    
+                    <!-- Quick Actions -->
+                    <div class="glass-card rounded-lg p-6">
+                        <h3 class="font-cinzel text-lg font-bold text-ancient-gold mb-4">Quick Actions</h3>
+                        <div class="space-y-3">
+                            <button onclick="openCreateTradeModal()" class="w-full bg-ancient-gold hover:bg-ancient-gold/80 text-deep-void px-4 py-3 rounded font-medium transition-colors">
+                                📝 Create Trade Offer
+                            </button>
+                            <button onclick="window.location.href='index.html'" class="w-full bg-cosmic-teal hover:bg-cosmic-teal/80 text-ghost-white px-4 py-3 rounded font-medium transition-colors">
+                                🔍 Browse Collection
+                            </button>
+                            <button onclick="showNotification('Trade history opened', 'info')" class="w-full bg-shadow-gray hover:bg-mystic-silver/20 text-ghost-white px-4 py-3 rounded font-medium transition-colors">
+                                📊 View Trade History
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Trade Filters -->
+                    <div class="glass-card rounded-lg p-6">
+                        <h3 class="font-cinzel text-lg font-bold text-ancient-gold mb-4">Filter Trades</h3>
+                        
+                        <!-- Status Filter -->
+                        <div class="mb-4">
+                            <h4 class="text-mystic-silver font-medium mb-2">Status</h4>
+                            <div class="space-y-2">
+                                <label class="flex items-center space-x-2 cursor-pointer">
+                                    <input type="checkbox" class="trade-filter" data-status="active" checked>
+                                    <span class="text-sm text-ghost-white">Active</span>
+                                </label>
+                                <label class="flex items-center space-x-2 cursor-pointer">
+                                    <input type="checkbox" class="trade-filter" data-status="pending">
+                                    <span class="text-sm text-ghost-white">Pending</span>
+                                </label>
+                                <label class="flex items-center space-x-2 cursor-pointer">
+                                    <input type="checkbox" class="trade-filter" data-status="completed">
+                                    <span class="text-sm text-ghost-white">Completed</span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <!-- Category Filter -->
+                        <div class="mb-4">
+                            <h4 class="text-mystic-silver font-medium mb-2">Category</h4>
+                            <select id="category-filter" class="w-full bg-shadow-gray text-ghost-white px-3 py-2 rounded border border-mystic-silver/20 focus:border-ancient-gold focus:outline-none">
+                                <option value="all">All Categories</option>
+                                <option value="vip">VIP Seasonal</option>
+                                <option value="purge">Purge Masks</option>
+                                <option value="season5">Season 5 Sets</option>
+                                <option value="mythic">Mythic Sets</option>
+                                <option value="crate">Crate Items</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Rarity Filter -->
+                        <div>
+                            <h4 class="text-mystic-silver font-medium mb-2">Rarity</h4>
+                            <select id="rarity-filter" class="w-full bg-shadow-gray text-ghost-white px-3 py-2 rounded border border-mystic-silver/20 focus:border-ancient-gold focus:outline-none">
+                                <option value="all">All Rarities</option>
+                                <option value="common">Common</option>
+                                <option value="rare">Rare</option>
+                                <option value="epic">Epic</option>
+                                <option value="legendary">Legendary</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Your Trade Stats -->
+                    <div class="glass-card rounded-lg p-6">
+                        <h3 class="font-cinzel text-lg font-bold text-ancient-gold mb-4">Your Stats</h3>
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between">
+                                <span class="text-mystic-silver text-sm">Successful Trades:</span>
+                                <span class="text-ancient-gold font-bold">156</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-mystic-silver text-sm">Trade Volume:</span>
+                                <span class="text-ghost-white font-bold">2,847 skins</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-mystic-silver text-sm">Average Rating:</span>
+                                <span class="text-ghost-white font-bold">4.7/5.0</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-mystic-silver text-sm">Response Time:</span>
+                                <span class="text-ghost-white font-bold">2.3 hours</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Main Trade Feed -->
+            <div class="lg:col-span-3">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="font-cinzel text-2xl font-bold text-ancient-gold">Active Trades</h2>
+                    <div class="flex items-center space-x-4">
+                        <div class="text-mystic-silver text-sm">
+                            Showing <span id="showing-trades">24</span> of <span id="total-trades">1,247</span> trades
+                        </div>
+                        <select id="sort-trades" class="bg-shadow-gray text-ghost-white px-3 py-2 rounded border border-mystic-silver/20 focus:border-ancient-gold focus:outline-none">
+                            <option value="newest">Newest First</option>
+                            <option value="oldest">Oldest First</option>
+                            <option value="value">Highest Value</option>
+                            <option value="rating">Trader Rating</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <!-- Trade List -->
+                <div id="trade-list" class="space-y-4">
+                    <!-- Trade entries will be dynamically generated here -->
+                </div>
+                
+                <!-- Load More Button -->
+                <div class="text-center mt-8">
+                    <button id="load-more-trades" class="bg-shadow-gray hover:bg-mystic-silver/20 text-ghost-white px-6 py-3 rounded transition-colors">
+                        Load More Trades
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+    
+    <!-- Create Trade Modal -->
+    <div id="create-trade-modal" class="fixed inset-0 z-50 hidden modal-overlay">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="glass-card rounded-lg p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="font-cinzel text-2xl font-bold text-ancient-gold">Create Trade Offer</h3>
+                    <button onclick="closeCreateTradeModal()" class="text-mystic-silver hover:text-ghost-white text-xl">
+                        ✕
+                    </button>
+                </div>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <!-- Your Offer Section -->
+                    <div>
+                        <h4 class="text-mystic-silver font-medium mb-4">🤝 Your Offer</h4>
+                        <div id="your-offer-items" class="space-y-3 mb-4">
+                            <div class="item-selector rounded-lg p-4 text-center cursor-pointer" onclick="openItemSelector('offer')">
+                                <div class="text-mystic-silver mb-2">+</div>
+                                <div class="text-mystic-silver text-sm">Click to add items</div>
+                            </div>
+                        </div>
+                        
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-mystic-silver text-sm mb-2">Additional Notes</label>
+                                <textarea id="trade-notes" rows="3" class="w-full bg-shadow-gray text-ghost-white px-3 py-2 rounded border border-mystic-silver/20 focus:border-ancient-gold focus:outline-none" placeholder="Any additional details about your offer..."></textarea>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-mystic-silver text-sm mb-2">Trade Duration</label>
+                                <select id="trade-duration" class="w-full bg-shadow-gray text-ghost-white px-3 py-2 rounded border border-mystic-silver/20 focus:border-ancient-gold focus:outline-none">
+                                    <option value="24">24 hours</option>
+                                    <option value="48">48 hours</option>
+                                    <option value="72">72 hours</option>
+                                    <option value="168">1 week</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- What You Want Section -->
+                    <div>
+                        <h4 class="text-mystic-silver font-medium mb-4">🎯 What You Want</h4>
+                        <div id="your-request-items" class="space-y-3 mb-4">
+                            <div class="item-selector rounded-lg p-4 text-center cursor-pointer" onclick="openItemSelector('request')">
+                                <div class="text-mystic-silver mb-2">+</div>
+                                <div class="text-mystic-silver text-sm">Click to add desired items</div>
+                            </div>
+                        </div>
+                        
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-mystic-silver text-sm mb-2">Preferred Categories</label>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <label class="flex items-center space-x-2 cursor-pointer">
+                                        <input type="checkbox" class="category-preference" value="vip">
+                                        <span class="text-sm text-ghost-white">VIP</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer">
+                                        <input type="checkbox" class="category-preference" value="purge">
+                                        <span class="text-sm text-ghost-white">Purge</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer">
+                                        <input type="checkbox" class="category-preference" value="season5">
+                                        <span class="text-sm text-ghost-white">Season 5</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer">
+                                        <input type="checkbox" class="category-preference" value="mythic">
+                                        <span class="text-sm text-ghost-white">Mythic</span>
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-mystic-silver text-sm mb-2">Minimum Rarity</label>
+                                <select id="min-rarity" class="w-full bg-shadow-gray text-ghost-white px-3 py-2 rounded border border-mystic-silver/20 focus:border-ancient-gold focus:outline-none">
+                                    <option value="any">Any Rarity</option>
+                                    <option value="common">Common</option>
+                                    <option value="rare">Rare</option>
+                                    <option value="epic">Epic</option>
+                                    <option value="legendary">Legendary</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex space-x-3 mt-8">
+                    <button onclick="submitTradeOffer()" class="flex-1 bg-ancient-gold hover:bg-ancient-gold/80 text-deep-void px-6 py-3 rounded font-medium transition-colors">
+                        Create Trade Offer
+                    </button>
+                    <button onclick="closeCreateTradeModal()" class="flex-1 bg-shadow-gray hover:bg-mystic-silver/20 text-ghost-white px-6 py-3 rounded font-medium transition-colors">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Trade Details Modal -->
+    <div id="trade-details-modal" class="fixed inset-0 z-50 hidden modal-overlay">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="glass-card rounded-lg p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="font-cinzel text-2xl font-bold text-ancient-gold">Trade Details</h3>
+                    <button onclick="closeTradeDetailsModal()" class="text-mystic-silver hover:text-ghost-white text-xl">
+                        ✕
+                    </button>
+                </div>
+                
+                <div id="trade-details-content">
+                    <!-- Trade details will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Item Selector Modal -->
+    <div id="item-selector-modal" class="fixed inset-0 z-50 hidden modal-overlay">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="glass-card rounded-lg p-6 w-full max-w-2xl max-h-[80vh] overflow-y-auto">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="font-cinzel text-xl font-bold text-ancient-gold">Select Items</h3>
+                    <button onclick="closeItemSelectorModal()" class="text-mystic-silver hover:text-ghost-white text-xl">
+                        ✕
+                    </button>
+                </div>
+                
+                <div class="mb-4">
+                    <input type="text" id="item-search" placeholder="Search your items..." 
+                           class="w-full bg-shadow-gray text-ghost-white px-4 py-2 rounded border border-mystic-silver/20 focus:border-ancient-gold focus:outline-none">
+                </div>
+                
+                <div id="item-grid" class="grid grid-cols-3 gap-4 max-h-96 overflow-y-auto">
+                    <!-- Items will be loaded here -->
+                </div>
+                
+                <div class="flex space-x-3 mt-6">
+                    <button onclick="confirmItemSelection()" class="flex-1 bg-ancient-gold hover:bg-ancient-gold/80 text-deep-void px-4 py-2 rounded transition-colors">
+                        Add Selected Items
+                    </button>
+                    <button onclick="closeItemSelectorModal()" class="flex-1 bg-shadow-gray hover:bg-mystic-silver/20 text-ghost-white px-4 py-2 rounded transition-colors">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Notification Toast -->
+    <div id="notification-toast" class="notification-toast glass-card rounded-lg p-4">
+        <div class="flex items-center space-x-3">
+            <div id="notification-icon" class="text-2xl">🎉</div>
+            <div>
+                <div id="notification-title" class="font-medium text-ghost-white">Trade Created!</div>
+                <div id="notification-message" class="text-sm text-mystic-silver">Your trade offer has been posted</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Footer -->
+    <footer class="bg-shadow-gray/50 border-t border-mystic-silver/20 py-8 mt-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <div class="font-cinzel text-ancient-gold text-lg mb-2">Lovercraft Skindex</div>
+            <div class="text-mystic-silver text-sm">
+                © 2024 Lovercraft Skindex. All rights reserved. Trade safely, collect wisely.
+            </div>
+        </div>
+    </footer>
+    
+    <script>
+        // Trade Center specific functionality
+        const TradeCenterApp = {
+            selectedItems: {
+                offer: [],
+                request: []
+            },
+            currentSelectorType: null,
+            
+            mockTrades: [
+                {
+                    id: 'trade_001',
+                    trader: 'EldritchMaster',
+                    avatar: 'resources/user-avatar-2.jpg',
+                    reputation: 4.9,
+                    offer: ['vip5_pickaxe', 'purge5_black'],
+                    request: ['myth_excalibur'],
+                    status: 'active',
+                    created: '2 hours ago',
+                    notes: 'Looking for mythic items, willing to trade multiple rare items'
+                },
+                {
+                    id: 'trade_002',
+                    trader: 'CosmicCollector',
+                    avatar: 'resources/user-avatar-3.jpg',
+                    reputation: 4.8,
+                    offer: ['s5_tribalpickaxe3', 's5_futureaxe1'],
+                    request: ['vip_s7_phoenix_wings'],
+                    status: 'active',
+                    created: '4 hours ago',
+                    notes: 'Will consider other VIP seasonal items'
+                },
+                {
+                    id: 'trade_003',
+                    trader: 'MysticArchivist',
+                    avatar: 'resources/user-avatar-1.jpg',
+                    reputation: 4.7,
+                    offer: ['crate_cyberpunk_helmet', 'crate_8bit_sword'],
+                    request: ['purge6_mask_gas'],
+                    status: 'pending',
+                    created: '6 hours ago',
+                    notes: 'New to trading, looking for purge masks specifically'
+                },
+                {
+                    id: 'trade_004',
+                    trader: 'AncientHunter',
+                    avatar: 'resources/user-avatar-2.jpg',
+                    reputation: 4.6,
+                    offer: ['myth_hydrapickaxe', 'myth_bident'],
+                    request: ['vip_monthly_sword_inferno', 'vip_monthly_axe_winter'],
+                    status: 'active',
+                    created: '8 hours ago',
+                    notes: 'Looking to complete my VIP collection'
+                },
+                {
+                    id: 'trade_005',
+                    trader: 'VoidWalker',
+                    avatar: 'resources/user-avatar-3.jpg',
+                    reputation: 4.5,
+                    offer: ['purge_5.1', 'purge_5.2', 'purge_5.3'],
+                    request: ['s5_futurepickaxe3'],
+                    status: 'active',
+                    created: '12 hours ago',
+                    notes: 'Offering 3:1 trade for legendary future pickaxe'
+                }
+            ]
+        };
+        
+        // Initialize trade center
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeTradeCenter();
+        });
+        
+        function initializeTradeCenter() {
+            setupParticleBackground();
+            setupEventListeners();
+            renderTradeList();
+            setupScrollReveal();
+        }
+        
+        function setupParticleBackground() {
+            new p5(function(p) {
+                let particles = [];
+                let numParticles = 40;
+                
+                p.setup = function() {
+                    let canvas = p.createCanvas(p.windowWidth, p.windowHeight);
+                    canvas.parent('particle-bg');
+                    canvas.style('position', 'fixed');
+                    canvas.style('top', '0');
+                    canvas.style('left', '0');
+                    canvas.style('z-index', '-1');
+                    
+                    for (let i = 0; i < numParticles; i++) {
+                        particles.push({
+                            x: p.random(p.width),
+                            y: p.random(p.height),
+                            vx: p.random(-0.4, 0.4),
+                            vy: p.random(-0.4, 0.4),
+                            size: p.random(1, 2),
+                            opacity: p.random(0.1, 0.25)
+                        });
+                    }
+                };
+                
+                p.draw = function() {
+                    p.clear();
+                    
+                    for (let particle of particles) {
+                        particle.x += particle.vx;
+                        particle.y += particle.vy;
+                        
+                        if (particle.x < 0) particle.x = p.width;
+                        if (particle.x > p.width) particle.x = 0;
+                        if (particle.y < 0) particle.y = p.height;
+                        if (particle.y > p.height) particle.y = 0;
+                        
+                        p.fill(212, 175, 55, particle.opacity * 255);
+                        p.noStroke();
+                        p.circle(particle.x, particle.y, particle.size);
+                    }
+                };
+                
+                p.windowResized = function() {
+                    p.resizeCanvas(p.windowWidth, p.windowHeight);
+                };
+            });
+        }
+        
+        function setupEventListeners() {
+            // Filter event listeners
+            document.querySelectorAll('.trade-filter').forEach(filter => {
+                filter.addEventListener('change', applyTradeFilters);
+            });
+            
+            document.getElementById('category-filter')?.addEventListener('change', applyTradeFilters);
+            document.getElementById('rarity-filter')?.addEventListener('change', applyTradeFilters);
+            document.getElementById('sort-trades')?.addEventListener('change', sortTrades);
+            
+            // Load more button
+            document.getElementById('load-more-trades')?.addEventListener('click', loadMoreTrades);
+        }
+        
+        function renderTradeList() {
+            const tradeList = document.getElementById('trade-list');
+            if (!tradeList) return;
+            
+            tradeList.innerHTML = '';
+            
+            TradeCenterApp.mockTrades.forEach((trade, index) => {
+                const tradeCard = createTradeCard(trade, index);
+                tradeList.appendChild(tradeCard);
+            });
+            
+            // Animate cards
+            anime({
+                targets: '.trade-card',
+                opacity: [0, 1],
+                translateY: [20, 0],
+                delay: anime.stagger(100),
+                duration: 600,
+                easing: 'easeOutQuart'
+            });
+            
+            updateTradeCounts();
+        }
+        
+        function createTradeCard(trade, index) {
+            const card = document.createElement('div');
+            card.className = 'trade-card glass-card rounded-lg p-6 hover-lift cursor-pointer';
+            card.onclick = () => openTradeDetails(trade);
+            
+            const statusClass = `status-${trade.status}`;
+            const statusText = trade.status.charAt(0).toUpperCase() + trade.status.slice(1);
+            
+            const repClass = trade.reputation >= 4.5 ? 'rep-excellent' : 
+                            trade.reputation >= 4.0 ? 'rep-good' :
+                            trade.reputation >= 3.0 ? 'rep-fair' : 'rep-poor';
+            
+            card.innerHTML = `
+                <div class="flex items-start justify-between mb-4">
+                    <div class="flex items-center space-x-3">
+                        <img src="${trade.avatar}" alt="${trade.trader}" class="w-12 h-12 rounded-full border-2 border-ancient-gold">
+                        <div>
+                            <h3 class="font-cinzel text-lg font-bold text-ancient-gold">${trade.trader}</h3>
+                            <div class="reputation-badge ${repClass}">
+                                <span>⭐</span>
+                                <span>${trade.reputation}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <div class="trade-status ${statusClass}">${statusText}</div>
+                        <div class="text-xs text-mystic-silver mt-1">${trade.created}</div>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <h4 class="text-mystic-silver text-sm font-medium mb-2">Offering:</h4>
+                        <div class="space-y-1">
+                            ${trade.offer.map(itemId => {
+                                const item = getItemById(itemId);
+                                return `<div class="text-sm text-ghost-white">• ${item ? item.name : itemId}</div>`;
+                            }).join('')}
+                        </div>
+                    </div>
+                    <div>
+                        <h4 class="text-mystic-silver text-sm font-medium mb-2">Looking for:</h4>
+                        <div class="space-y-1">
+                            ${trade.request.map(itemId => {
+                                const item = getItemById(itemId);
+                                return `<div class="text-sm text-ghost-white">• ${item ? item.name : itemId}</div>`;
+                            }).join('')}
+                        </div>
+                    </div>
+                </div>
+                
+                ${trade.notes ? `
+                    <div class="bg-shadow-gray/50 rounded p-3 mb-4">
+                        <div class="text-xs text-mystic-silver mb-1">Notes:</div>
+                        <div class="text-sm text-ghost-white">${trade.notes}</div>
+                    </div>
+                ` : ''}
+                
+                <div class="flex space-x-2">
+                    <button onclick="event.stopPropagation(); acceptTrade('${trade.id}')" class="flex-1 bg-cosmic-teal hover:bg-cosmic-teal/80 text-ghost-white px-4 py-2 rounded text-sm transition-colors">
+                        Propose Trade
+                    </button>
+                    <button onclick="event.stopPropagation(); messageTrader('${trade.trader}')" class="flex-1 bg-shadow-gray hover:bg-mystic-silver/20 text-ghost-white px-4 py-2 rounded text-sm transition-colors">
+                        Message
+                    </button>
+                </div>
+            `;
+            
+            return card;
+        }
+        
+        function getItemById(id) {
+            if (window.LovercraftSkindex && window.LovercraftSkindex.SKIN_DATABASE) {
+                return window.LovercraftSkindex.SKIN_DATABASE.find(item => item.id === id);
+            }
+            return null;
+        }
+        
+        function openTradeDetails(trade) {
+            const modal = document.getElementById('trade-details-modal');
+            const content = document.getElementById('trade-details-content');
+            
+            if (!modal || !content) return;
+            
+            content.innerHTML = `
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <!-- Trade Details -->
+                    <div>
+                        <div class="flex items-center space-x-4 mb-6">
+                            <img src="${trade.avatar}" alt="${trade.trader}" class="w-16 h-16 rounded-full border-2 border-ancient-gold">
+                            <div>
+                                <h3 class="font-cinzel text-xl font-bold text-ancient-gold">${trade.trader}</h3>
+                                <div class="reputation-badge rep-excellent">
+                                    <span>⭐</span>
+                                    <span>${trade.reputation}</span>
+                                </div>
+                                <div class="text-sm text-mystic-silver mt-1">Posted ${trade.created}</div>
+                            </div>
+                        </div>
+                        
+                        <div class="space-y-4">
+                            <div>
+                                <h4 class="text-mystic-silver font-medium mb-2">Offering:</h4>
+                                <div class="glass-card rounded p-4">
+                                    ${trade.offer.map(itemId => {
+                                        const item = getItemById(itemId);
+                                        return `
+                                            <div class="flex items-center justify-between py-2">
+                                                <span class="text-ghost-white">${item ? item.name : itemId}</span>
+                                                <span class="text-xs text-mystic-silver capitalize">${item ? item.rarity : 'unknown'}</span>
+                                            </div>
+                                        `;
+                                    }).join('')}
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <h4 class="text-mystic-silver font-medium mb-2">Looking for:</h4>
+                                <div class="glass-card rounded p-4">
+                                    ${trade.request.map(itemId => {
+                                        const item = getItemById(itemId);
+                                        return `
+                                            <div class="flex items-center justify-between py-2">
+                                                <span class="text-ghost-white">${item ? item.name : itemId}</span>
+                                                <span class="text-xs text-mystic-silver capitalize">${item ? item.rarity : 'unknown'}</span>
+                                            </div>
+                                        `;
+                                    }).join('')}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Chat/Messaging Section -->
+                    <div>
+                        <h4 class="text-mystic-silver font-medium mb-4">Trade Discussion</h4>
+                        <div class="glass-card rounded-lg p-4 h-64 overflow-y-auto mb-4" id="chat-messages">
+                            <div class="space-y-3">
+                                <div class="chat-bubble received rounded-lg p-3">
+                                    <div class="text-sm">Hi! I'm interested in this trade. Would you consider adding something small to even out the value?</div>
+                                    <div class="text-xs text-mystic-silver mt-1">${trade.trader} • 5 min ago</div>
+                                </div>
+                                <div class="chat-bubble sent rounded-lg p-3">
+                                    <div class="text-sm">Sure! What kind of items are you looking for as an add?</div>
+                                    <div class="text-xs text-mystic-silver mt-1">You • 3 min ago</div>
+                                </div>
+                                <div class="typing-indicator">
+                                    <div class="typing-dot"></div>
+                                    <div class="typing-dot"></div>
+                                    <div class="typing-dot"></div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="flex space-x-2">
+                            <input type="text" id="chat-input" placeholder="Type your message..." 
+                                   class="flex-1 bg-shadow-gray text-ghost-white px-4 py-2 rounded border border-mystic-silver/20 focus:border-ancient-gold focus:outline-none">
+                            <button onclick="sendMessage()" class="bg-cosmic-teal hover:bg-cosmic-teal/80 text-ghost-white px-4 py-2 rounded transition-colors">
+                                Send
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex space-x-3 mt-8">
+                    <button onclick="acceptTrade(trade.id)" class="flex-1 bg-ancient-gold hover:bg-ancient-gold/80 text-deep-void px-6 py-3 rounded font-medium transition-colors">
+                        Accept Trade
+                    </button>
+                    <button onclick="counterTrade(trade.id)" class="flex-1 bg-cosmic-teal hover:bg-cosmic-teal/80 text-ghost-white px-6 py-3 rounded font-medium transition-colors">
+                        Make Counter Offer
+                    </button>
+                    <button onclick="closeTradeDetailsModal()" class="flex-1 bg-shadow-gray hover:bg-mystic-silver/20 text-ghost-white px-6 py-3 rounded font-medium transition-colors">
+                        Close
+                    </button>
+                </div>
+            `;
+            
+            modal.classList.remove('hidden');
+            
+            anime({
+                targets: modal.querySelector('.glass-card'),
+                scale: [0.8, 1],
+                opacity: [0, 1],
+                duration: 300,
+                easing: 'easeOutQuart'
+            });
+        }
+        
+        function closeTradeDetailsModal() {
+            const modal = document.getElementById('trade-details-modal');
+            if (modal) {
+                modal.classList.add('hidden');
+            }
+        }
+        
+        function openCreateTradeModal() {
+            const modal = document.getElementById('create-trade-modal');
+            if (modal) {
+                modal.classList.remove('hidden');
+                
+                anime({
+                    targets: modal.querySelector('.glass-card'),
+                    scale: [0.8, 1],
+                    opacity: [0, 1],
+                    duration: 300,
+                    easing: 'easeOutQuart'
+                });
+            }
+        }
+        
+        function closeCreateTradeModal() {
+            const modal = document.getElementById('create-trade-modal');
+            if (modal) {
+                modal.classList.add('hidden');
+            }
+        }
+        
+        function openItemSelector(type) {
+            TradeCenterApp.currentSelectorType = type;
+            const modal = document.getElementById('item-selector-modal');
+            if (modal) {
+                modal.classList.remove('hidden');
+                loadUserItems();
+                
+                anime({
+                    targets: modal.querySelector('.glass-card'),
+                    scale: [0.8, 1],
+                    opacity: [0, 1],
+                    duration: 300,
+                    easing: 'easeOutQuart'
+                });
+            }
+        }
+        
+        function closeItemSelectorModal() {
+            const modal = document.getElementById('item-selector-modal');
+            if (modal) {
+                modal.classList.add('hidden');
+            }
+        }
+        
+        function loadUserItems() {
+            const itemGrid = document.getElementById('item-grid');
+            if (!itemGrid || !window.LovercraftSkindex || !window.LovercraftSkindex.SKIN_DATABASE) return;
+            
+            itemGrid.innerHTML = '';
+            
+            // Get user's verified skins
+            const userItems = window.LovercraftSkindex.SKIN_DATABASE.filter(item => item.status === 'verified');
+            
+            userItems.forEach(item => {
+                const itemCard = document.createElement('div');
+                itemCard.className = 'item-selector rounded-lg p-3 cursor-pointer hover:bg-ancient-gold/10 transition-colors';
+                itemCard.onclick = () => selectItem(item, itemCard);
+                
+                itemCard.innerHTML = `
+                    <img src="${item.image}" alt="${item.name}" class="w-full h-16 object-cover rounded mb-2">
+                    <div class="text-sm text-ghost-white font-medium">${item.name}</div>
+                    <div class="text-xs text-mystic-silver capitalize">${item.rarity}</div>
+                `;
+                
+                itemGrid.appendChild(itemCard);
+            });
+        }
+        
+        function selectItem(item, cardElement) {
+            const isSelected = TradeCenterApp.selectedItems[TradeCenterApp.currentSelectorType].find(i => i.id === item.id);
+            
+            if (isSelected) {
+                // Deselect item
+                TradeCenterApp.selectedItems[TradeCenterApp.currentSelectorType] = TradeCenterApp.selectedItems[TradeCenterApp.currentSelectorType].filter(i => i.id !== item.id);
+                cardElement.classList.remove('item-selected');
+            } else {
+                // Select item
+                TradeCenterApp.selectedItems[TradeCenterApp.currentSelectorType].push(item);
+                cardElement.classList.add('item-selected');
+            }
+        }
+        
+        function confirmItemSelection() {
+            const container = TradeCenterApp.currentSelectorType === 'offer' ? 
+                document.getElementById('your-offer-items') : 
+                document.getElementById('your-request-items');
+            
+            if (!container) return;
+            
+            // Clear existing items (except the add button)
+            const existingItems = container.querySelectorAll('.selected-item');
+            existingItems.forEach(item => item.remove());
+            
+            // Add selected items
+            TradeCenterApp.selectedItems[TradeCenterApp.currentSelectorType].forEach(item => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'selected-item flex items-center space-x-3 bg-shadow-gray/50 rounded p-3';
+                
+                itemDiv.innerHTML = `
+                    <img src="${item.image}" alt="${item.name}" class="w-8 h-8 rounded">
+                    <div class="flex-1">
+                        <div class="text-sm text-ghost-white font-medium">${item.name}</div>
+                        <div class="text-xs text-mystic-silver capitalize">${item.rarity}</div>
+                    </div>
+                    <button onclick="removeSelectedItem('${item.id}', '${TradeCenterApp.currentSelectorType}')" class="text-blood-crimson hover:text-red-400">
+                        ✕
+                    </button>
+                `;
+                
+                container.insertBefore(itemDiv, container.firstChild);
+            });
+            
+            closeItemSelectorModal();
+        }
+        
+        function removeSelectedItem(itemId, type) {
+            TradeCenterApp.selectedItems[type] = TradeCenterApp.selectedItems[type].filter(item => item.id !== itemId);
+            
+            // Refresh the display
+            const container = type === 'offer' ? 
+                document.getElementById('your-offer-items') : 
+                document.getElementById('your-request-items');
+            
+            if (container) {
+                const itemElement = container.querySelector(`[data-item-id="${itemId}"]`);
+                if (itemElement) {
+                    itemElement.remove();
+                }
+            }
+        }
+        
+        function submitTradeOffer() {
+            const offerItems = TradeCenterApp.selectedItems.offer;
+            const requestItems = TradeCenterApp.selectedItems.request;
+            const notes = document.getElementById('trade-notes')?.value || '';
+            const duration = document.getElementById('trade-duration')?.value || '24';
+            
+            if (offerItems.length === 0) {
+                showNotification('Please select at least one item to offer', 'error');
+                return;
+            }
+            
+            if (requestItems.length === 0) {
+                showNotification('Please select at least one item you want', 'error');
+                return;
+            }
+            
+            // Create new trade object
+            const newTrade = {
+                id: `trade_${Date.now()}`,
+                trader: 'Collector_Kane',
+                avatar: 'resources/user-avatar-1.jpg',
+                reputation: 4.7,
+                offer: offerItems.map(item => item.id),
+                request: requestItems.map(item => item.id),
+                status: 'active',
+                created: 'Just now',
+                notes: notes
+            };
+            
+            // Add to trade list
+            TradeCenterApp.mockTrades.unshift(newTrade);
+            
+            showNotification('Trade offer created successfully!', 'success');
+            closeCreateTradeModal();
+            renderTradeList();
+            
+            // Reset form
+            TradeCenterApp.selectedItems = { offer: [], request: [] };
+            document.getElementById('trade-notes').value = '';
+        }
+        
+        function acceptTrade(tradeId) {
+            showNotification('Trade accepted! Please upload proof of ownership.', 'success');
+            closeTradeDetailsModal();
+        }
+        
+        function counterTrade(tradeId) {
+            showNotification('Counter offer feature coming soon!', 'info');
+        }
+        
+        function messageTrader(traderName) {
+            showNotification(`Opening conversation with ${traderName}`, 'info');
+        }
+        
+        function sendMessage() {
+            const input = document.getElementById('chat-input');
+            if (!input || !input.value.trim()) return;
+            
+            const message = input.value.trim();
+            showNotification('Message sent!', 'success');
+            input.value = '';
+        }
+        
+        function applyTradeFilters() {
+            // This would filter the trades based on selected criteria
+            showNotification('Filters applied', 'info');
+            renderTradeList();
+        }
+        
+        function sortTrades() {
+            // This would sort the trades based on selected criteria
+            showNotification('Trades sorted', 'info');
+            renderTradeList();
+        }
+        
+        function loadMoreTrades() {
+            showNotification('Loading more trades...', 'info');
+            // This would load additional trades in a real implementation
+        }
+        
+        function updateTradeCounts() {
+            const showingElement = document.getElementById('showing-trades');
+            const totalElement = document.getElementById('total-trades');
+            
+            if (showingElement) showingElement.textContent = TradeCenterApp.mockTrades.length;
+            if (totalElement) totalElement.textContent = '1,247';
+        }
+        
+        function setupScrollReveal() {
+            const observerOptions = {
+                threshold: 0.1,
+                rootMargin: '0px 0px -50px 0px'
+            };
+            
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('revealed');
+                    }
+                });
+            }, observerOptions);
+            
+            document.querySelectorAll('.scroll-reveal').forEach(el => {
+                observer.observe(el);
+            });
+        }
+        
+        function showNotification(message, type = 'info') {
+            // Reuse the notification system from main.js
+            if (window.LovercraftSkindex && window.LovercraftSkindex.showNotification) {
+                window.LovercraftSkindex.showNotification(message, type);
+            } else {
+                console.log(`${type.toUpperCase()}: ${message}`);
+            }
+        }
+        
+        console.log('Trade Center initialized successfully');
+    </script>
+    
+    <script src="main.js"></script>
+</body>
+</html>

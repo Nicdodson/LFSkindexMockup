@@ -1,0 +1,1205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lovercraft Skindex - Collection Dashboard</title>
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Inter:wght@300;400;500;600&family=Uncial+Antiqua&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Core Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.4.3/echarts.min.js"></script>
+    <script src="https://unpkg.com/splitting@1.0.6/dist/splitting.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/splitting@1.0.6/dist/splitting.css">
+    
+    <style>
+        :root {
+            --deep-void: #0a0a0a;
+            --eldritch-purple: #2d1b3d;
+            --ancient-gold: #d4af37;
+            --mystic-silver: #c0c0c0;
+            --blood-crimson: #8b0000;
+            --ghost-white: #f8f8ff;
+            --shadow-gray: #2a2a2a;
+            --cosmic-teal: #008b8b;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--deep-void);
+            color: var(--ghost-white);
+            overflow-x: hidden;
+        }
+        
+        .font-cinzel { font-family: 'Cinzel', serif; }
+        .font-uncial { font-family: 'Uncial Antiqua', cursive; }
+        
+        .bg-eldritch { background: linear-gradient(135deg, var(--eldritch-purple), var(--shadow-gray)); }
+        .bg-deep-void { background: var(--deep-void); }
+        .text-ancient-gold { color: var(--ancient-gold); }
+        .text-mystic-silver { color: var(--mystic-silver); }
+        .text-cosmic-teal { color: var(--cosmic-teal); }
+        .border-ancient-gold { border-color: var(--ancient-gold); }
+        
+        .glass-card {
+            background: rgba(45, 27, 61, 0.3);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(212, 175, 55, 0.2);
+        }
+        
+        .hover-lift {
+            transition: all 0.3s ease;
+        }
+        
+        .hover-lift:hover {
+            transform: translateY(-5px) rotateX(5deg);
+            box-shadow: 0 20px 40px rgba(212, 175, 55, 0.2);
+        }
+        
+        .verification-badge {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .verified { background: var(--ancient-gold); color: var(--deep-void); }
+        .pending { background: var(--cosmic-teal); color: var(--ghost-white); }
+        .unverified { background: var(--blood-crimson); color: var(--ghost-white); }
+        
+        .particle-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+        
+        .scroll-reveal {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.6s ease;
+        }
+        
+        .scroll-reveal.revealed {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .filter-active {
+            background: var(--ancient-gold);
+            color: var(--deep-void);
+        }
+        
+        .skin-card {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .skin-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.1), transparent);
+            transition: left 0.5s;
+        }
+        
+        .skin-card:hover::before {
+            left: 100%;
+        }
+        
+        .progress-bar {
+            background: linear-gradient(90deg, var(--cosmic-teal), var(--ancient-gold));
+            height: 4px;
+            border-radius: 2px;
+            transition: width 0.8s ease;
+        }
+        
+        .notification-toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+        }
+        
+        .notification-toast.show {
+            transform: translateX(0);
+        }
+        
+        .modal-overlay {
+            background: rgba(10, 10, 10, 0.8);
+            backdrop-filter: blur(5px);
+        }
+        
+        .achievement-glow {
+            animation: achievementGlow 2s ease-in-out infinite alternate;
+        }
+        
+        @keyframes achievementGlow {
+            from { box-shadow: 0 0 20px rgba(212, 175, 55, 0.3); }
+            to { box-shadow: 0 0 30px rgba(212, 175, 55, 0.6); }
+        }
+        
+        .typing-effect {
+            overflow: hidden;
+            border-right: 2px solid var(--ancient-gold);
+            animation: typing 2s steps(40, end), blink-caret 0.75s step-end infinite;
+        }
+        
+        @keyframes typing {
+            from { width: 0; }
+            to { width: 100%; }
+        }
+        
+        @keyframes blink-caret {
+            from, to { border-color: transparent; }
+            50% { border-color: var(--ancient-gold); }
+        }
+        
+        .sparkle-effect {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            font-size: 20px;
+            pointer-events: none;
+        }
+        
+        .online-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.25rem 0.75rem;
+            background: rgba(0, 139, 139, 0.2);
+            border: 1px solid var(--cosmic-teal);
+            border-radius: 20px;
+            font-size: 0.875rem;
+        }
+        
+        .pulse-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--cosmic-teal);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.2); opacity: 0.7; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        .settings-panel {
+            position: fixed;
+            top: 80px;
+            right: -300px;
+            width: 300px;
+            height: calc(100vh - 80px);
+            background: rgba(45, 27, 61, 0.95);
+            backdrop-filter: blur(20px);
+            border-left: 1px solid rgba(212, 175, 55, 0.3);
+            transition: right 0.3s ease;
+            z-index: 40;
+            overflow-y: auto;
+        }
+        
+        .settings-panel.open {
+            right: 0;
+        }
+        
+        .settings-toggle {
+            position: fixed;
+            top: 50%;
+            right: 20px;
+            transform: translateY(-50%);
+            z-index: 50;
+            background: var(--ancient-gold);
+            color: var(--deep-void);
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .settings-toggle:hover {
+            transform: translateY(-50%) scale(1.1);
+            box-shadow: 0 0 20px rgba(212, 175, 55, 0.5);
+        }
+        
+        .compact-view .skin-card {
+            padding: 0.5rem;
+        }
+        
+        .compact-view .skin-card img {
+            height: 60px;
+        }
+        
+        .light-mode {
+            --deep-void: #f8f8ff;
+            --eldritch-purple: #e5e5e5;
+            --ghost-white: #0a0a0a;
+            --shadow-gray: #ffffff;
+            --mystic-silver: #2a2a2a;
+        }
+        
+        .dragover {
+            border-color: var(--ancient-gold) !important;
+            background: rgba(212, 175, 55, 0.1) !important;
+        }
+        
+        .search-suggestions {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: var(--shadow-gray);
+            border: 1px solid var(--mystic-silver);
+            border-top: none;
+            border-radius: 0 0 8px 8px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 100;
+        }
+        
+        .search-suggestion {
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+        
+        .search-suggestion:hover {
+            background: rgba(212, 175, 55, 0.2);
+        }
+        
+        .collection-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--ancient-gold);
+        }
+        
+        .quick-actions-fab {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            z-index: 1000;
+        }
+        
+        .fab-main {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: var(--ancient-gold);
+            color: var(--deep-void);
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .fab-main:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(212, 175, 55, 0.5);
+        }
+        
+        .fab-actions {
+            position: absolute;
+            bottom: 70px;
+            right: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.3s ease;
+            pointer-events: none;
+        }
+        
+        .fab-actions.open {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: all;
+        }
+        
+        .fab-action {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: var(--cosmic-teal);
+            color: var(--ghost-white);
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .fab-action:hover {
+            transform: scale(1.1);
+        }
+    </style>
+</head>
+<body>
+    <!-- Particle Background -->
+    <div id="particle-bg" class="particle-bg"></div>
+    
+    <!-- Navigation Header -->
+    <nav class="fixed top-0 left-0 right-0 z-50 glass-card">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center space-x-4">
+                    <div class="font-cinzel text-2xl font-bold text-ancient-gold">
+                        Lovercraft Skindex
+                    </div>
+                    <div class="hidden md:block text-sm text-mystic-silver">
+                        Collector's Hub
+                    </div>
+                </div>
+                
+                <div class="hidden md:flex items-center space-x-8">
+                    <a href="index.html" class="text-ancient-gold font-medium border-b-2 border-ancient-gold pb-1">
+                        Dashboard
+                    </a>
+                    <a href="leaderboard.html" class="text-mystic-silver hover:text-ancient-gold transition-colors">
+                        Leaderboard
+                    </a>
+                    <a href="trade-center.html" class="text-mystic-silver hover:text-ancient-gold transition-colors">
+                        Trade Center
+                    </a>
+                    <a href="community-gallery.html" class="text-mystic-silver hover:text-ancient-gold transition-colors">
+                        Gallery
+                    </a>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <div class="relative">
+                        <input type="text" id="global-search" placeholder="Search skins..." 
+                               class="bg-shadow-gray text-ghost-white px-4 py-2 rounded-lg border border-mystic-silver/20 focus:border-ancient-gold focus:outline-none w-64">
+                        <div class="absolute right-3 top-2.5 text-mystic-silver">
+                            🔍
+                        </div>
+                        <div id="search-suggestions" class="search-suggestions hidden"></div>
+                    </div>
+                    <div class="flex items-center space-x-2 cursor-pointer" onclick="toggleUserProfile()">
+                        <img src="resources/user-avatar-1.jpg" alt="Profile" class="w-8 h-8 rounded-full border-2 border-ancient-gold">
+                        <span class="hidden md:block text-mystic-silver">Collector_Kane</span>
+                        <div class="online-indicator">
+                            <div class="pulse-dot"></div>
+                            <span id="online-users">1,247</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Settings Panel -->
+    <div class="settings-panel" id="settings-panel">
+        <div class="p-6">
+            <h3 class="font-cinzel text-lg font-bold text-ancient-gold mb-6">Settings</h3>
+            
+            <div class="space-y-6">
+                <div>
+                    <h4 class="text-mystic-silver font-medium mb-3">Display</h4>
+                    <div class="space-y-3">
+                        <label class="flex items-center justify-between">
+                            <span class="text-sm text-ghost-white">Dark Mode</span>
+                            <input type="checkbox" id="dark-mode-toggle" checked class="toggle-switch">
+                        </label>
+                        <label class="flex items-center justify-between">
+                            <span class="text-sm text-ghost-white">Compact View</span>
+                            <input type="checkbox" id="compact-toggle" class="toggle-switch">
+                        </label>
+                        <label class="flex items-center justify-between">
+                            <span class="text-sm text-ghost-white">Sound Effects</span>
+                            <input type="checkbox" id="sound-toggle" checked class="toggle-switch">
+                        </label>
+                    </div>
+                </div>
+                
+                <div>
+                    <h4 class="text-mystic-silver font-medium mb-3">Notifications</h4>
+                    <div class="space-y-3">
+                        <label class="flex items-center justify-between">
+                            <span class="text-sm text-ghost-white">Trade Offers</span>
+                            <input type="checkbox" checked class="toggle-switch">
+                        </label>
+                        <label class="flex items-center justify-between">
+                            <span class="text-sm text-ghost-white">Verification Reminders</span>
+                            <input type="checkbox" checked class="toggle-switch">
+                        </label>
+                        <label class="flex items-center justify-between">
+                            <span class="text-sm text-ghost-white">Achievement Alerts</span>
+                            <input type="checkbox" checked class="toggle-switch">
+                        </label>
+                    </div>
+                </div>
+                
+                <div>
+                    <h4 class="text-mystic-silver font-medium mb-3">Privacy</h4>
+                    <div class="space-y-3">
+                        <label class="flex items-center justify-between">
+                            <span class="text-sm text-ghost-white">Show Online Status</span>
+                            <input type="checkbox" checked class="toggle-switch">
+                        </label>
+                        <label class="flex items-center justify-between">
+                            <span class="text-sm text-ghost-white">Public Collection</span>
+                            <input type="checkbox" checked class="toggle-switch">
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="pt-4 border-t border-mystic-silver/20">
+                    <button onclick="showNotification('Settings saved!', 'success')" class="w-full bg-ancient-gold hover:bg-ancient-gold/80 text-deep-void px-4 py-2 rounded transition-colors">
+                        Save Settings
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Settings Toggle Button -->
+    <button class="settings-toggle" onclick="toggleSettings()" title="Settings">
+        ⚙️
+    </button>
+    
+    <!-- Hero Section -->
+    <section class="pt-24 pb-12 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-8">
+                <h1 class="font-cinzel text-5xl font-bold text-ancient-gold mb-4 typing-effect" data-splitting>
+                    Your Collection Awaits
+                </h1>
+                <p class="text-xl text-mystic-silver max-w-2xl mx-auto">
+                    Discover, verify, and trade the most coveted skins in the Lovercraft universe. 
+                    Build your legacy as the ultimate collector.
+                </p>
+            </div>
+            
+            <!-- Enhanced Collection Stats -->
+            <div class="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
+                <div class="glass-card rounded-lg p-6 text-center hover-lift scroll-reveal">
+                    <div class="text-3xl font-bold text-ancient-gold mb-2">847</div>
+                    <div class="text-mystic-silver">Verified Skins</div>
+                    <div class="text-sm text-cosmic-teal mt-1">+12 this week</div>
+                </div>
+                <div class="glass-card rounded-lg p-6 text-center hover-lift scroll-reveal">
+                    <div class="text-3xl font-bold text-ancient-gold mb-2">1,247</div>
+                    <div class="text-mystic-silver">Total Collection</div>
+                    <div class="w-full bg-shadow-gray rounded-full h-2 mt-3">
+                        <div class="progress-bar rounded-full" style="width: 67.9%"></div>
+                    </div>
+                    <div class="text-xs text-mystic-silver mt-1">67.9% Complete</div>
+                </div>
+                <div class="glass-card rounded-lg p-6 text-center hover-lift scroll-reveal">
+                    <div class="text-3xl font-bold text-ancient-gold mb-2">#47</div>
+                    <div class="text-mystic-silver">Global Rank</div>
+                    <div class="text-sm text-cosmic-teal mt-1">↑ 5 positions</div>
+                </div>
+                <div class="glass-card rounded-lg p-6 text-center hover-lift scroll-reveal">
+                    <div class="text-3xl font-bold text-ancient-gold mb-2">23</div>
+                    <div class="text-mystic-silver">Verification Streak</div>
+                    <div class="text-sm text-blood-crimson mt-1">7 days remaining</div>
+                </div>
+                <div class="glass-card rounded-lg p-6 text-center hover-lift scroll-reveal">
+                    <div class="collection-value" id="collection-value">0</div>
+                    <div class="text-mystic-silver">Collection Value</div>
+                    <div class="text-sm text-cosmic-teal mt-1">+2.3k this month</div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            
+            <!-- Enhanced Left Sidebar - Filters -->
+            <div class="lg:col-span-1">
+                <div class="glass-card rounded-lg p-6 sticky top-24">
+                    <h3 class="font-cinzel text-xl font-bold text-ancient-gold mb-6">Filters</h3>
+                    
+                    <!-- Category Filter -->
+                    <div class="mb-6">
+                        <h4 class="text-mystic-silver font-medium mb-3">Categories</h4>
+                        <div class="space-y-2">
+                            <button class="filter-btn w-full text-left px-3 py-2 rounded text-sm hover:bg-ancient-gold/20 transition-colors filter-active" data-category="all">
+                                All Items <span class="float-right text-mystic-silver">1,247</span>
+                            </button>
+                            <button class="filter-btn w-full text-left px-3 py-2 rounded text-sm hover:bg-ancient-gold/20 transition-colors" data-category="vip">
+                                VIP Seasonal <span class="float-right text-mystic-silver">156</span>
+                            </button>
+                            <button class="filter-btn w-full text-left px-3 py-2 rounded text-sm hover:bg-ancient-gold/20 transition-colors" data-category="purge">
+                                Purge Masks <span class="float-right text-mystic-silver">89</span>
+                            </button>
+                            <button class="filter-btn w-full text-left px-3 py-2 rounded text-sm hover:bg-ancient-gold/20 transition-colors" data-category="season5">
+                                Season 5 Sets <span class="float-right text-mystic-silver">234</span>
+                            </button>
+                            <button class="filter-btn w-full text-left px-3 py-2 rounded text-sm hover:bg-ancient-gold/20 transition-colors" data-category="mythic">
+                                Mythic Sets <span class="float-right text-mystic-silver">67</span>
+                            </button>
+                            <button class="filter-btn w-full text-left px-3 py-2 rounded text-sm hover:bg-ancient-gold/20 transition-colors" data-category="crate">
+                                Crate Items <span class="float-right text-mystic-silver">445</span>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Verification Status Filter -->
+                    <div class="mb-6">
+                        <h4 class="text-mystic-silver font-medium mb-3">Verification Status</h4>
+                        <div class="space-y-2">
+                            <button class="filter-btn w-full text-left px-3 py-2 rounded text-sm hover:bg-ancient-gold/20 transition-colors" data-status="verified">
+                                ✅ Verified <span class="float-right text-mystic-silver">847</span>
+                            </button>
+                            <button class="filter-btn w-full text-left px-3 py-2 rounded text-sm hover:bg-ancient-gold/20 transition-colors" data-status="pending">
+                                ⏳ Pending <span class="float-right text-mystic-silver">23</span>
+                            </button>
+                            <button class="filter-btn w-full text-left px-3 py-2 rounded text-sm hover:bg-ancient-gold/20 transition-colors" data-status="unverified">
+                                ❌ Unverified <span class="float-right text-mystic-silver">377</span>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Rarity Filter -->
+                    <div class="mb-6">
+                        <h4 class="text-mystic-silver font-medium mb-3">Rarity</h4>
+                        <div class="space-y-2">
+                            <button class="filter-btn w-full text-left px-3 py-2 rounded text-sm hover:bg-ancient-gold/20 transition-colors" data-rarity="common">
+                                Common <span class="float-right text-mystic-silver">567</span>
+                            </button>
+                            <button class="filter-btn w-full text-left px-3 py-2 rounded text-sm hover:bg-ancient-gold/20 transition-colors" data-rarity="rare">
+                                Rare <span class="float-right text-mystic-silver">389</span>
+                            </button>
+                            <button class="filter-btn w-full text-left px-3 py-2 rounded text-sm hover:bg-ancient-gold/20 transition-colors" data-rarity="epic">
+                                Epic <span class="float-right text-mystic-silver">201</span>
+                            </button>
+                            <button class="filter-btn w-full text-left px-3 py-2 rounded text-sm hover:bg-ancient-gold/20 transition-colors" data-rarity="legendary">
+                                Legendary <span class="float-right text-mystic-silver">90</span>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Value Range Filter -->
+                    <div class="mb-6">
+                        <h4 class="text-mystic-silver font-medium mb-3">Value Range</h4>
+                        <div class="space-y-3">
+                            <div class="flex items-center space-x-2">
+                                <input type="range" id="min-value" min="0" max="1000" value="0" class="flex-1">
+                                <span class="text-xs text-mystic-silver" id="min-value-display">0</span>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <input type="range" id="max-value" min="0" max="1000" value="1000" class="flex-1">
+                                <span class="text-xs text-mystic-silver" id="max-value-display">1000</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Quick Actions -->
+                    <div class="border-t border-mystic-silver/20 pt-6">
+                        <h4 class="text-mystic-silver font-medium mb-3">Quick Actions</h4>
+                        <div class="space-y-2">
+                            <button onclick="openVerificationModal()" class="w-full bg-cosmic-teal hover:bg-cosmic-teal/80 text-ghost-white px-4 py-2 rounded text-sm transition-colors">
+                                Verify Now
+                            </button>
+                            <button onclick="openUploadModal()" class="w-full bg-ancient-gold hover:bg-ancient-gold/80 text-deep-void px-4 py-2 rounded text-sm transition-colors">
+                                Upload Proof
+                            </button>
+                            <button onclick="window.location.href='trade-center.html'" class="w-full bg-shadow-gray hover:bg-mystic-silver/20 text-ghost-white px-4 py-2 rounded text-sm transition-colors">
+                                Start Trade
+                            </button>
+                            <button onclick="showNotification('Bulk verification feature coming soon!', 'info')" class="w-full bg-mystic-silver hover:bg-mystic-silver/80 text-deep-void px-4 py-2 rounded text-sm transition-colors">
+                                Bulk Verify
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Enhanced Center Content - Skin Grid -->
+            <div class="lg:col-span-2">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="font-cinzel text-2xl font-bold text-ancient-gold">Your Collection</h2>
+                    <div class="flex items-center space-x-4">
+                        <select id="sort-select" class="bg-shadow-gray text-ghost-white px-3 py-2 rounded border border-mystic-silver/20 focus:border-ancient-gold focus:outline-none">
+                            <option value="name">Sort by Name</option>
+                            <option value="id">Sort by ID</option>
+                            <option value="rarity">Sort by Rarity</option>
+                            <option value="verification">Sort by Status</option>
+                            <option value="value">Sort by Value</option>
+                        </select>
+                        <div class="text-mystic-silver text-sm">
+                            Showing <span id="showing-count">20</span> of <span id="total-count">1247</span>
+                        </div>
+                        <button onclick="toggleViewMode()" class="bg-shadow-gray hover:bg-mystic-silver/20 text-ghost-white px-3 py-2 rounded text-sm transition-colors" title="Toggle Compact View">
+                            📊
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Collection Analytics Chart -->
+                <div class="glass-card rounded-lg p-6 mb-6">
+                    <h3 class="font-cinzel text-lg font-bold text-ancient-gold mb-4">Collection Analytics</h3>
+                    <div id="analytics-chart" style="height: 200px;"></div>
+                </div>
+                
+                <!-- Skin Grid -->
+                <div id="skin-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    <!-- Skin cards will be dynamically generated here -->
+                </div>
+                
+                <!-- Enhanced Pagination -->
+                <div class="flex items-center justify-center mt-8 space-x-2">
+                    <button id="prev-page" class="px-4 py-2 bg-shadow-gray hover:bg-mystic-silver/20 text-ghost-white rounded transition-colors">
+                        ← Previous
+                    </button>
+                    <div id="page-numbers" class="flex space-x-1">
+                        <!-- Page numbers will be generated here -->
+                    </div>
+                    <button id="next-page" class="px-4 py-2 bg-shadow-gray hover:bg-mystic-silver/20 text-ghost-white rounded transition-colors">
+                        Next →
+                    </button>
+                    <div class="ml-4 text-mystic-silver text-sm">
+                        Page <span id="current-page-display">1</span> of <span id="total-pages-display">63</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Enhanced Right Sidebar - Stats & Activity -->
+            <div class="lg:col-span-1">
+                <div class="space-y-6">
+                    
+                    <!-- Collection Progress -->
+                    <div class="glass-card rounded-lg p-6">
+                        <h3 class="font-cinzel text-lg font-bold text-ancient-gold mb-4">Collection Progress</h3>
+                        <div class="space-y-4">
+                            <div>
+                                <div class="flex justify-between text-sm mb-1">
+                                    <span class="text-mystic-silver">VIP Items</span>
+                                    <span class="text-ancient-gold">89/156</span>
+                                </div>
+                                <div class="w-full bg-shadow-gray rounded-full h-2">
+                                    <div class="progress-bar rounded-full" style="width: 57%"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-sm mb-1">
+                                    <span class="text-mystic-silver">Purge Collection</span>
+                                    <span class="text-ancient-gold">67/89</span>
+                                </div>
+                                <div class="w-full bg-shadow-gray rounded-full h-2">
+                                    <div class="progress-bar rounded-full" style="width: 75%"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-sm mb-1">
+                                    <span class="text-mystic-silver">Season 5</span>
+                                    <span class="text-ancient-gold">189/234</span>
+                                </div>
+                                <div class="w-full bg-shadow-gray rounded-full h-2">
+                                    <div class="progress-bar rounded-full" style="width: 81%"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-sm mb-1">
+                                    <span class="text-mystic-silver">Mythic Sets</span>
+                                    <span class="text-ancient-gold">45/67</span>
+                                </div>
+                                <div class="w-full bg-shadow-gray rounded-full h-2">
+                                    <div class="progress-bar rounded-full" style="width: 67%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Real-time Activity Feed -->
+                    <div class="glass-card rounded-lg p-6">
+                        <h3 class="font-cinzel text-lg font-bold text-ancient-gold mb-4">Live Activity</h3>
+                        <div class="space-y-3 max-h-64 overflow-y-auto" id="activity-feed">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-2 h-2 bg-ancient-gold rounded-full animate-pulse"></div>
+                                <div class="flex-1">
+                                    <div class="text-sm text-ghost-white">Verified vip5_pickaxe</div>
+                                    <div class="text-xs text-mystic-silver">2 minutes ago</div>
+                                </div>
+                            </div>
+                            <div class="flex items-center space-x-3">
+                                <div class="w-2 h-2 bg-cosmic-teal rounded-full"></div>
+                                <div class="flex-1">
+                                    <div class="text-sm text-ghost-white">Trade completed with @MysticCollector</div>
+                                    <div class="text-xs text-mystic-silver">5 minutes ago</div>
+                                </div>
+                            </div>
+                            <div class="flex items-center space-x-3">
+                                <div class="w-2 h-2 bg-ancient-gold rounded-full"></div>
+                                <div class="flex-1">
+                                    <div class="text-sm text-ghost-white">Achievement unlocked: Trade Master</div>
+                                    <div class="text-xs text-mystic-silver">12 minutes ago</div>
+                                </div>
+                            </div>
+                            <div class="flex items-center space-x-3">
+                                <div class="w-2 h-2 bg-cosmic-teal rounded-full"></div>
+                                <div class="flex-1">
+                                    <div class="text-sm text-ghost-white">New follower: @EldritchMaster</div>
+                                    <div class="text-xs text-mystic-silver">18 minutes ago</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Verification Countdown -->
+                    <div class="glass-card rounded-lg p-6">
+                        <h3 class="font-cinzel text-lg font-bold text-ancient-gold mb-4">Verification Countdown</h3>
+                        <div class="text-center">
+                            <div class="text-2xl font-bold text-blood-crimson mb-2" id="countdown-timer">7d 12h 34m 56s</div>
+                            <div class="text-sm text-mystic-silver mb-4">Until next verification required</div>
+                            <button onclick="openVerificationModal()" class="w-full bg-blood-crimson hover:bg-blood-crimson/80 text-ghost-white px-4 py-2 rounded text-sm transition-colors">
+                                Verify Now
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Recent Achievements -->
+                    <div class="glass-card rounded-lg p-6">
+                        <h3 class="font-cinzel text-lg font-bold text-ancient-gold mb-4">Recent Achievements</h3>
+                        <div class="space-y-3">
+                            <div class="flex items-center space-x-3 achievement-glow p-2 rounded">
+                                <img src="resources/achievement-badge.png" alt="Achievement" class="w-8 h-8">
+                                <div class="flex-1">
+                                    <div class="text-sm text-ancient-gold font-medium">Trade Master</div>
+                                    <div class="text-xs text-mystic-silver">50 successful trades</div>
+                                </div>
+                            </div>
+                            <div class="flex items-center space-x-3 p-2 rounded">
+                                <img src="resources/achievement-badge.png" alt="Achievement" class="w-8 h-8 opacity-60">
+                                <div class="flex-1">
+                                    <div class="text-sm text-mystic-silver">Verification Streak</div>
+                                    <div class="text-xs text-mystic-silver">30 days (23/30)</div>
+                                </div>
+                            </div>
+                            <div class="flex items-center space-x-3 p-2 rounded">
+                                <img src="resources/achievement-badge.png" alt="Achievement" class="w-8 h-8 opacity-60">
+                                <div class="flex-1">
+                                    <div class="text-sm text-mystic-silver">Collection Master</div>
+                                    <div class="text-xs text-mystic-silver">1000+ items (847/1000)</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Quick Stats -->
+                    <div class="glass-card rounded-lg p-6">
+                        <h3 class="font-cinzel text-lg font-bold text-ancient-gold mb-4">Quick Stats</h3>
+                        <div class="space-y-3 text-sm">
+                            <div class="flex justify-between">
+                                <span class="text-mystic-silver">Total Value:</span>
+                                <span class="text-ancient-gold font-bold" id="total-value-display">0</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-mystic-silver">Avg. Value:</span>
+                                <span class="text-ghost-white font-bold" id="avg-value-display">0</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-mystic-silver">Legendary:</span>
+                                <span class="text-ghost-white font-bold">90 items</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-mystic-silver">Trade Ready:</span>
+                                <span class="text-cosmic-teal font-bold">847 items</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+    
+    <!-- Enhanced Verification Modal -->
+    <div id="verification-modal" class="fixed inset-0 z-50 hidden modal-overlay">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="glass-card rounded-lg p-6 w-full max-w-2xl">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="font-cinzel text-2xl font-bold text-ancient-gold">Verify Skin Collection</h3>
+                    <button onclick="closeVerificationModal()" class="text-mystic-silver hover:text-ghost-white text-xl">
+                        ✕
+                    </button>
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div>
+                        <div class="mb-4">
+                            <label class="block text-mystic-silver text-sm mb-2">Select Skin to Verify</label>
+                            <select id="verify-skin-select" class="w-full bg-shadow-gray text-ghost-white px-3 py-2 rounded border border-mystic-silver/20 focus:border-ancient-gold focus:outline-none">
+                                <option value="">Choose a skin...</option>
+                            </select>
+                        </div>
+                        <div class="mb-4">
+                            <label class="block text-mystic-silver text-sm mb-2">Verification Method</label>
+                            <div class="space-y-2">
+                                <label class="flex items-center space-x-2 cursor-pointer">
+                                    <input type="radio" name="verify-method" value="screenshot" checked>
+                                    <span class="text-sm text-ghost-white">Screenshot Proof</span>
+                                </label>
+                                <label class="flex items-center space-x-2 cursor-pointer">
+                                    <input type="radio" name="verify-method" value="video">
+                                    <span class="text-sm text-ghost-white">Video Proof</span>
+                                </label>
+                                <label class="flex items-center space-x-2 cursor-pointer">
+                                    <input type="radio" name="verify-method" value="witness">
+                                    <span class="text-sm text-ghost-white">Witness Verification</span>
+                                </label>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-mystic-silver text-sm mb-2">Additional Notes</label>
+                            <textarea id="verification-notes" rows="4" class="w-full bg-shadow-gray text-ghost-white px-3 py-2 rounded border border-mystic-silver/20 focus:border-ancient-gold focus:outline-none" placeholder="Any additional context for verification..."></textarea>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="mb-4">
+                            <label class="block text-mystic-silver text-sm mb-2">Upload Proof</label>
+                            <div class="border-2 border-dashed border-mystic-silver/40 rounded-lg p-8 text-center hover:border-ancient-gold/60 transition-colors cursor-pointer" onclick="document.getElementById('proof-upload').click()">
+                                <div class="text-mystic-silver mb-2 text-4xl">📸</div>
+                                <div class="text-mystic-silver font-medium mb-1">Click to upload proof</div>
+                                <div class="text-xs text-mystic-silver/60">Supports JPG, PNG, GIF up to 10MB</div>
+                                <div class="text-xs text-mystic-silver/60 mt-1">Drag & drop supported</div>
+                            </div>
+                            <input type="file" id="proof-upload" accept="image/*,video/*" class="hidden">
+                            <div id="proof-preview" class="mt-3 hidden">
+                                <img id="preview-image" src="" alt="Preview" class="w-full max-h-32 object-cover rounded">
+                            </div>
+                        </div>
+                        <div class="bg-shadow-gray/50 rounded p-4">
+                            <h4 class="text-mystic-silver font-medium mb-2">Verification Tips:</h4>
+                            <ul class="text-xs text-mystic-silver space-y-1">
+                                <li>• Include your username in the screenshot</li>
+                                <li>• Show the item clearly with its ID</li>
+                                <li>• Include date/time if possible</li>
+                                <li>• Multiple angles for rare items</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex space-x-3 mt-8">
+                    <button onclick="submitVerification()" class="flex-1 bg-ancient-gold hover:bg-ancient-gold/80 text-deep-void px-6 py-3 rounded font-medium transition-colors">
+                        Submit for Verification
+                    </button>
+                    <button onclick="closeVerificationModal()" class="flex-1 bg-shadow-gray hover:bg-mystic-silver/20 text-ghost-white px-6 py-3 rounded font-medium transition-colors">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Enhanced Upload Modal -->
+    <div id="upload-modal" class="fixed inset-0 z-50 hidden modal-overlay">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="glass-card rounded-lg p-6 w-full max-w-2xl">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="font-cinzel text-2xl font-bold text-ancient-gold">Add New Skin</h3>
+                    <button onclick="closeUploadModal()" class="text-mystic-silver hover:text-ghost-white text-xl">
+                        ✕
+                    </button>
+                </div>
+                <div class="space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-mystic-silver text-sm mb-2">Skin Name or ID</label>
+                            <input type="text" id="new-skin-name" class="w-full bg-shadow-gray text-ghost-white px-3 py-2 rounded border border-mystic-silver/20 focus:border-ancient-gold focus:outline-none" placeholder="Enter skin name or ID...">
+                        </div>
+                        <div>
+                            <label class="block text-mystic-silver text-sm mb-2">Category</label>
+                            <select id="new-skin-category" class="w-full bg-shadow-gray text-ghost-white px-3 py-2 rounded border border-mystic-silver/20 focus:border-ancient-gold focus:outline-none">
+                                <option value="vip">VIP Seasonal</option>
+                                <option value="purge">Purge Masks</option>
+                                <option value="season5">Season 5 Sets</option>
+                                <option value="mythic">Mythic Sets</option>
+                                <option value="crate">Crate Items</option>
+                                <option value="event">Event Items</option>
+                                <option value="limited">Limited Edition</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-mystic-silver text-sm mb-2">Rarity</label>
+                            <select id="new-skin-rarity" class="w-full bg-shadow-gray text-ghost-white px-3 py-2 rounded border border-mystic-silver/20 focus:border-ancient-gold focus:outline-none">
+                                <option value="common">Common</option>
+                                <option value="rare">Rare</option>
+                                <option value="epic">Epic</option>
+                                <option value="legendary">Legendary</option>
+                                <option value="mythic">Mythic</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-mystic-silver text-sm mb-2">Estimated Value</label>
+                            <input type="number" id="new-skin-value" class="w-full bg-shadow-gray text-ghost-white px-3 py-2 rounded border border-mystic-silver/20 focus:border-ancient-gold focus:outline-none" placeholder="Value in credits...">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-mystic-silver text-sm mb-2">Upload Image (Optional)</label>
+                        <div class="upload-zone rounded-lg p-6 text-center cursor-pointer" onclick="document.getElementById('skin-image-upload').click()">
+                            <div class="text-mystic-silver mb-2 text-4xl">🖼️</div>
+                            <div class="text-mystic-silver font-medium mb-1">Click to upload image</div>
+                            <div class="text-xs text-mystic-silver/60">Or drag & drop here</div>
+                        </div>
+                        <input type="file" id="skin-image-upload" accept="image/*" class="hidden">
+                        <div id="skin-image-preview" class="mt-3 hidden">
+                            <img src="" alt="Preview" class="w-full max-h-32 object-cover rounded">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-mystic-silver text-sm mb-2">Acquisition Notes</label>
+                        <textarea id="acquisition-notes" rows="3" class="w-full bg-shadow-gray text-ghost-white px-3 py-2 rounded border border-mystic-silver/20 focus:border-ancient-gold focus:outline-none" placeholder="How did you acquire this skin? Trade, purchase, event, etc."></textarea>
+                    </div>
+                </div>
+                <div class="flex space-x-3 mt-8">
+                    <button onclick="addNewSkin()" class="flex-1 bg-ancient-gold hover:bg-ancient-gold/80 text-deep-void px-6 py-3 rounded font-medium transition-colors">
+                        Add to Collection
+                    </button>
+                    <button onclick="closeUploadModal()" class="flex-1 bg-shadow-gray hover:bg-mystic-silver/20 text-ghost-white px-6 py-3 rounded font-medium transition-colors">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Notification Toast -->
+    <div id="notification-toast" class="notification-toast glass-card rounded-lg p-4">
+        <div class="flex items-center space-x-3">
+            <div id="notification-icon" class="text-2xl">🎉</div>
+            <div>
+                <div id="notification-title" class="font-medium text-ghost-white">Achievement Unlocked!</div>
+                <div id="notification-message" class="text-sm text-mystic-silver">You've completed a new milestone</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Floating Action Button -->
+    <div class="quick-actions-fab">
+        <div class="fab-actions" id="fab-actions">
+            <button class="fab-action" onclick="openUploadModal()" title="Add New Skin">➕</button>
+            <button class="fab-action" onclick="openVerificationModal()" title="Verify Skin">✅</button>
+            <button class="fab-action" onclick="window.location.href='trade-center.html'" title="Start Trade">🤝</button>
+            <button class="fab-action" onclick="showNotification('Screenshot mode activated!', 'info')" title="Screenshot">📸</button>
+        </div>
+        <button class="fab-main" onclick="toggleFAB()" id="fab-main" title="Quick Actions">
+            ⚡
+        </button>
+    </div>
+    
+    <!-- Footer -->
+    <footer class="bg-shadow-gray/50 border-t border-mystic-silver/20 py-8 mt-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <div class="font-cinzel text-ancient-gold text-lg mb-2">Lovercraft Skindex</div>
+            <div class="text-mystic-silver text-sm">
+                © 2024 Lovercraft Skindex. All rights reserved. Collect wisely, trade safely.
+            </div>
+            <div class="text-xs text-mystic-silver/60 mt-2">
+                Built with passion for the collecting community
+            </div>
+        </div>
+    </footer>
+    
+    <script src="main.js"></script>
+    <script>
+        // Additional dashboard-specific functionality
+        
+        function toggleSettings() {
+            const panel = document.getElementById('settings-panel');
+            panel.classList.toggle('open');
+        }
+        
+        function toggleFAB() {
+            const actions = document.getElementById('fab-actions');
+            actions.classList.toggle('open');
+        }
+        
+        function toggleViewMode() {
+            document.body.classList.toggle('compact-view');
+            renderSkinGrid();
+            showNotification('View mode toggled', 'info');
+        }
+        
+        function toggleUserProfile() {
+            showNotification('User profile feature coming soon!', 'info');
+        }
+        
+        // Initialize analytics chart
+        function initializeAnalyticsChart() {
+            const chartElement = document.getElementById('analytics-chart');
+            if (!chartElement) return;
+            
+            const chart = echarts.init(chartElement);
+            const option = {
+                backgroundColor: 'transparent',
+                textStyle: {
+                    color: '#f8f8ff'
+                },
+                tooltip: {
+                    trigger: 'axis',
+                    backgroundColor: 'rgba(45, 27, 61, 0.9)',
+                    borderColor: '#d4af37',
+                    textStyle: { color: '#f8f8ff' }
+                },
+                legend: {
+                    data: ['Verified', 'Pending', 'Unverified'],
+                    textStyle: { color: '#c0c0c0' },
+                    top: 10
+                },
+                grid: {
+                    left: '3%',
+                    right: '4%',
+                    bottom: '3%',
+                    containLabel: true
+                },
+                xAxis: {
+                    type: 'category',
+                    boundaryGap: false,
+                    data: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                    axisLine: { lineStyle: { color: '#c0c0c0' } },
+                    axisLabel: { color: '#c0c0c0' }
+                },
+                yAxis: {
+                    type: 'value',
+                    axisLine: { lineStyle: { color: '#c0c0c0' } },
+                    axisLabel: { color: '#c0c0c0' },
+                    splitLine: { lineStyle: { color: '#2a2a2a' } }
+                },
+                series: [
+                    {
+                        name: 'Verified',
+                        type: 'line',
+                        stack: 'Total',
+                        data: [820, 832, 841, 854, 860, 870, 847],
+                        lineStyle: { color: '#d4af37' },
+                        itemStyle: { color: '#d4af37' },
+                        areaStyle: { color: 'rgba(212, 175, 55, 0.1)' }
+                    },
+                    {
+                        name: 'Pending',
+                        type: 'line',
+                        stack: 'Total',
+                        data: [15, 18, 22, 25, 28, 30, 23],
+                        lineStyle: { color: '#008b8b' },
+                        itemStyle: { color: '#008b8b' },
+                        areaStyle: { color: 'rgba(0, 139, 139, 0.1)' }
+                    },
+                    {
+                        name: 'Unverified',
+                        type: 'line',
+                        stack: 'Total',
+                        data: [380, 390, 384, 368, 359, 347, 377],
+                        lineStyle: { color: '#8b0000' },
+                        itemStyle: { color: '#8b0000' },
+                        areaStyle: { color: 'rgba(139, 0, 0, 0.1)' }
+                    }
+                ]
+            };
+            
+            chart.setOption(option);
+            
+            window.addEventListener('resize', () => {
+                chart.resize();
+            });
+        }
+        
+        // Enhanced value range sliders
+        function setupValueRangeSliders() {
+            const minSlider = document.getElementById('min-value');
+            const maxSlider = document.getElementById('max-value');
+            const minDisplay = document.getElementById('min-value-display');
+            const maxDisplay = document.getElementById('max-value-display');
+            
+            if (minSlider && maxSlider) {
+                minSlider.addEventListener('input', (e) => {
+                    minDisplay.textContent = e.target.value;
+                    applyFilters();
+                });
+                
+                maxSlider.addEventListener('input', (e) => {
+                    maxDisplay.textContent = e.target.value;
+                    applyFilters();
+                });
+            }
+        }
+        
+        // Enhanced activity feed
+        function updateActivityFeed() {
+            const activities = [
+                'Verified mythic_excalibur',
+                'Trade completed with @VoidWalker',
+                'New achievement: Collection Master',
+                'Received offer for vip5_pickaxe',
+                'Joined #MysticMashup challenge',
+                'Followed by @AncientHunter',
+                'Verification streak: 24 days',
+                'Added 3 new skins to collection'
+            ];
+            
+            const feed = document.getElementById('activity-feed');
+            if (feed) {
+                setInterval(() => {
+                    const randomActivity = activities[Math.floor(Math.random() * activities.length)];
+                    const newActivity = document.createElement('div');
+                    newActivity.className = 'flex items-center space-x-3';
+                    newActivity.innerHTML = `
+                        <div class="w-2 h-2 bg-ancient-gold rounded-full animate-pulse"></div>
+                        <div class="flex-1">
+                            <div class="text-sm text-ghost-white">${randomActivity}</div>
+                            <div class="text-xs text-mystic-silver">Just now</div>
+                        </div>
+                    `;
+                    
+                    feed.insertBefore(newActivity, feed.firstChild);
+                    
+                    // Remove old activities
+                    if (feed.children.length > 8) {
+                        feed.removeChild(feed.lastChild);
+                    }
+                }, 15000);
+            }
+        }
+        
+        // Initialize additional features when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeAnalyticsChart();
+            setupValueRangeSliders();
+            updateActivityFeed();
+            
+            // Add keyboard shortcut help
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'F1') {
+                    e.preventDefault();
+                    showNotification('Press Ctrl+K for search, Ctrl+N for upload, ESC to close modals', 'info', 5000);
+                }
+            });
+        });
+        
+        console.log('Enhanced Dashboard features loaded successfully');
+    </script>
+</body>
+</html>

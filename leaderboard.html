@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lovercraft Skindex - Leaderboard</title>
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Inter:wght@300;400;500;600&family=Uncial+Antiqua&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Core Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.4.3/echarts.min.js"></script>
+    <script src="https://unpkg.com/splitting@1.0.6/dist/splitting.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/splitting@1.0.6/dist/splitting.css">
+    
+    <style>
+        :root {
+            --deep-void: #0a0a0a;
+            --eldritch-purple: #2d1b3d;
+            --ancient-gold: #d4af37;
+            --mystic-silver: #c0c0c0;
+            --blood-crimson: #8b0000;
+            --ghost-white: #f8f8ff;
+            --shadow-gray: #2a2a2a;
+            --cosmic-teal: #008b8b;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--deep-void);
+            color: var(--ghost-white);
+            overflow-x: hidden;
+        }
+        
+        .font-cinzel { font-family: 'Cinzel', serif; }
+        .font-uncial { font-family: 'Uncial Antiqua', cursive; }
+        
+        .bg-eldritch { background: linear-gradient(135deg, var(--eldritch-purple), var(--shadow-gray)); }
+        .bg-deep-void { background: var(--deep-void); }
+        .text-ancient-gold { color: var(--ancient-gold); }
+        .text-mystic-silver { color: var(--mystic-silver); }
+        .text-cosmic-teal { color: var(--cosmic-teal); }
+        .border-ancient-gold { border-color: var(--ancient-gold); }
+        
+        .glass-card {
+            background: rgba(45, 27, 61, 0.3);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(212, 175, 55, 0.2);
+        }
+        
+        .hover-lift {
+            transition: all 0.3s ease;
+        }
+        
+        .hover-lift:hover {
+            transform: translateY(-5px) rotateX(5deg);
+            box-shadow: 0 20px 40px rgba(212, 175, 55, 0.2);
+        }
+        
+        .particle-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+        
+        .scroll-reveal {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.6s ease;
+        }
+        
+        .scroll-reveal.revealed {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .tab-active {
+            background: var(--ancient-gold);
+            color: var(--deep-void);
+        }
+        
+        .rank-badge {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        
+        .rank-1 { background: linear-gradient(45deg, #ffd700, #ffed4e); color: #000; }
+        .rank-2 { background: linear-gradient(45deg, #c0c0c0, #e5e5e5); color: #000; }
+        .rank-3 { background: linear-gradient(45deg, #cd7f32, #daa520); color: #fff; }
+        .rank-other { background: var(--shadow-gray); color: var(--ghost-white); }
+        
+        .user-profile-card {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .user-profile-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.1), transparent);
+            transition: left 0.5s;
+        }
+        
+        .user-profile-card:hover::before {
+            left: 100%;
+        }
+        
+        .achievement-glow {
+            animation: achievementGlow 2s ease-in-out infinite alternate;
+        }
+        
+        @keyframes achievementGlow {
+            from { box-shadow: 0 0 20px rgba(212, 175, 55, 0.3); }
+            to { box-shadow: 0 0 30px rgba(212, 175, 55, 0.6); }
+        }
+        
+        .trophy-icon {
+            font-size: 2rem;
+            filter: drop-shadow(0 0 10px rgba(212, 175, 55, 0.5));
+        }
+        
+        .stats-chart {
+            height: 300px;
+            margin: 20px 0;
+        }
+        
+        .time-filter-active {
+            background: var(--cosmic-teal);
+            color: var(--ghost-white);
+        }
+        
+        .ranking-animation {
+            animation: slideInUp 0.6s ease-out forwards;
+        }
+        
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Particle Background -->
+    <div id="particle-bg" class="particle-bg"></div>
+    
+    <!-- Navigation Header -->
+    <nav class="fixed top-0 left-0 right-0 z-50 glass-card">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center space-x-4">
+                    <div class="font-cinzel text-2xl font-bold text-ancient-gold">
+                        Lovercraft Skindex
+                    </div>
+                    <div class="hidden md:block text-sm text-mystic-silver">
+                        Collector's Hub
+                    </div>
+                </div>
+                
+                <div class="hidden md:flex items-center space-x-8">
+                    <a href="index.html" class="text-mystic-silver hover:text-ancient-gold transition-colors">
+                        Dashboard
+                    </a>
+                    <a href="leaderboard.html" class="text-ancient-gold font-medium border-b-2 border-ancient-gold pb-1">
+                        Leaderboard
+                    </a>
+                    <a href="trade-center.html" class="text-mystic-silver hover:text-ancient-gold transition-colors">
+                        Trade Center
+                    </a>
+                    <a href="community-gallery.html" class="text-mystic-silver hover:text-ancient-gold transition-colors">
+                        Gallery
+                    </a>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <div class="relative">
+                        <input type="text" id="leaderboard-search" placeholder="Search collectors..." 
+                               class="bg-shadow-gray text-ghost-white px-4 py-2 rounded-lg border border-mystic-silver/20 focus:border-ancient-gold focus:outline-none w-64">
+                        <div class="absolute right-3 top-2.5 text-mystic-silver">
+                            🔍
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <img src="resources/user-avatar-1.jpg" alt="Profile" class="w-8 h-8 rounded-full border-2 border-ancient-gold">
+                        <span class="hidden md:block text-mystic-silver">Collector_Kane</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Hero Section -->
+    <section class="pt-24 pb-12 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-8">
+                <h1 class="font-cinzel text-5xl font-bold text-ancient-gold mb-4">
+                    Hall of Legends
+                </h1>
+                <p class="text-xl text-mystic-silver max-w-2xl mx-auto">
+                    Witness the greatest collectors in the Lovercraft universe. 
+                    Compete, climb, and claim your place among the legends.
+                </p>
+            </div>
+            
+            <!-- Top 3 Podium -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+                <div class="glass-card rounded-lg p-6 text-center hover-lift scroll-reveal">
+                    <div class="trophy-icon text-ancient-gold mb-4">🏆</div>
+                    <div class="rank-badge rank-1 mx-auto mb-4">#1</div>
+                    <img src="resources/user-avatar-2.jpg" alt="Champion" class="w-16 h-16 rounded-full border-2 border-ancient-gold mx-auto mb-4">
+                    <h3 class="font-cinzel text-xl font-bold text-ancient-gold mb-2">EldritchMaster</h3>
+                    <div class="text-2xl font-bold text-ghost-white mb-1">2,847</div>
+                    <div class="text-mystic-silver text-sm">Verified Skins</div>
+                    <div class="mt-4 grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                            <div class="text-ancient-gold font-bold">156</div>
+                            <div class="text-mystic-silver">Trades</div>
+                        </div>
+                        <div>
+                            <div class="text-ancient-gold font-bold">89</div>
+                            <div class="text-mystic-silver">Streak</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="glass-card rounded-lg p-6 text-center hover-lift scroll-reveal">
+                    <div class="trophy-icon text-mystic-silver mb-4">🥈</div>
+                    <div class="rank-badge rank-2 mx-auto mb-4">#2</div>
+                    <img src="resources/user-avatar-3.jpg" alt="Runner-up" class="w-16 h-16 rounded-full border-2 border-mystic-silver mx-auto mb-4">
+                    <h3 class="font-cinzel text-xl font-bold text-ancient-gold mb-2">CosmicCollector</h3>
+                    <div class="text-2xl font-bold text-ghost-white mb-1">2,634</div>
+                    <div class="text-mystic-silver text-sm">Verified Skins</div>
+                    <div class="mt-4 grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                            <div class="text-ancient-gold font-bold">142</div>
+                            <div class="text-mystic-silver">Trades</div>
+                        </div>
+                        <div>
+                            <div class="text-ancient-gold font-bold">76</div>
+                            <div class="text-mystic-silver">Streak</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="glass-card rounded-lg p-6 text-center hover-lift scroll-reveal">
+                    <div class="trophy-icon text-ancient-gold mb-4">🥉</div>
+                    <div class="rank-badge rank-3 mx-auto mb-4">#3</div>
+                    <img src="resources/user-avatar-1.jpg" alt="Third place" class="w-16 h-16 rounded-full border-2 border-ancient-gold mx-auto mb-4">
+                    <h3 class="font-cinzel text-xl font-bold text-ancient-gold mb-2">MysticArchivist</h3>
+                    <div class="text-2xl font-bold text-ghost-white mb-1">2,456</div>
+                    <div class="text-mystic-silver text-sm">Verified Skins</div>
+                    <div class="mt-4 grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                            <div class="text-ancient-gold font-bold">134</div>
+                            <div class="text-mystic-silver">Trades</div>
+                        </div>
+                        <div>
+                            <div class="text-ancient-gold font-bold">82</div>
+                            <div class="text-mystic-silver">Streak</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            
+            <!-- Left Sidebar - Categories & Filters -->
+            <div class="lg:col-span-1">
+                <div class="glass-card rounded-lg p-6 sticky top-24">
+                    <h3 class="font-cinzel text-xl font-bold text-ancient-gold mb-6">Ranking Categories</h3>
+                    
+                    <!-- Category Tabs -->
+                    <div class="space-y-2 mb-6">
+                        <button class="category-tab w-full text-left px-4 py-3 rounded tab-active transition-colors" data-category="collection">
+                            <div class="flex items-center justify-between">
+                                <span>Collection Size</span>
+                                <span class="text-sm">🎒</span>
+                            </div>
+                        </button>
+                        <button class="category-tab w-full text-left px-4 py-3 rounded hover:bg-ancient-gold/20 transition-colors" data-category="trades">
+                            <div class="flex items-center justify-between">
+                                <span>Trade Volume</span>
+                                <span class="text-sm">🤝</span>
+                            </div>
+                        </button>
+                        <button class="category-tab w-full text-left px-4 py-3 rounded hover:bg-ancient-gold/20 transition-colors" data-category="verification">
+                            <div class="flex items-center justify-between">
+                                <span>Verification Streak</span>
+                                <span class="text-sm">✅</span>
+                            </div>
+                        </button>
+                        <button class="category-tab w-full text-left px-4 py-3 rounded hover:bg-ancient-gold/20 transition-colors" data-category="reputation">
+                            <div class="flex items-center justify-between">
+                                <span>Reputation</span>
+                                <span class="text-sm">⭐</span>
+                            </div>
+                        </button>
+                    </div>
+                    
+                    <!-- Time Period Filters -->
+                    <div class="mb-6">
+                        <h4 class="text-mystic-silver font-medium mb-3">Time Period</h4>
+                        <div class="space-y-2">
+                            <button class="time-filter w-full text-left px-3 py-2 rounded time-filter-active transition-colors" data-period="all">
+                                All Time
+                            </button>
+                            <button class="time-filter w-full text-left px-3 py-2 rounded hover:bg-cosmic-teal/20 transition-colors" data-period="monthly">
+                                This Month
+                            </button>
+                            <button class="time-filter w-full text-left px-3 py-2 rounded hover:bg-cosmic-teal/20 transition-colors" data-period="weekly">
+                                This Week
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Your Stats -->
+                    <div class="border-t border-mystic-silver/20 pt-6">
+                        <h4 class="text-mystic-silver font-medium mb-3">Your Position</h4>
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between">
+                                <span class="text-mystic-silver text-sm">Current Rank:</span>
+                                <span class="text-ancient-gold font-bold">#47</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-mystic-silver text-sm">Verified Skins:</span>
+                                <span class="text-ghost-white font-bold">847</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-mystic-silver text-sm">Trade Count:</span>
+                                <span class="text-ghost-white font-bold">156</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-mystic-silver text-sm">Streak:</span>
+                                <span class="text-ghost-white font-bold">23 days</span>
+                            </div>
+                        </div>
+                        <button onclick="window.location.href='index.html'" class="w-full mt-4 bg-cosmic-teal hover:bg-cosmic-teal/80 text-ghost-white px-4 py-2 rounded text-sm transition-colors">
+                            View Dashboard
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Main Leaderboard -->
+            <div class="lg:col-span-3">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="font-cinzel text-2xl font-bold text-ancient-gold">Top Collectors</h2>
+                    <div class="flex items-center space-x-4">
+                        <div class="text-mystic-silver text-sm">
+                            Showing top 50 of <span id="total-collectors">12,847</span> collectors
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Leaderboard List -->
+                <div id="leaderboard-list" class="space-y-4">
+                    <!-- Leaderboard entries will be dynamically generated here -->
+                </div>
+                
+                <!-- Load More Button -->
+                <div class="text-center mt-8">
+                    <button id="load-more" class="bg-shadow-gray hover:bg-mystic-silver/20 text-ghost-white px-6 py-3 rounded transition-colors">
+                        Load More Collectors
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Statistics Chart Section -->
+        <section class="mt-12">
+            <div class="glass-card rounded-lg p-6">
+                <h3 class="font-cinzel text-2xl font-bold text-ancient-gold mb-6">Collection Trends</h3>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div>
+                        <h4 class="text-mystic-silver font-medium mb-4">Top Categories by Volume</h4>
+                        <div id="category-chart" class="stats-chart"></div>
+                    </div>
+                    <div>
+                        <h4 class="text-mystic-silver font-medium mb-4">Weekly Activity</h4>
+                        <div id="activity-chart" class="stats-chart"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+    
+    <!-- User Profile Modal -->
+    <div id="profile-modal" class="fixed inset-0 z-50 hidden modal-overlay">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="glass-card rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="font-cinzel text-2xl font-bold text-ancient-gold">Collector Profile</h3>
+                    <button onclick="closeProfileModal()" class="text-mystic-silver hover:text-ghost-white text-xl">
+                        ✕
+                    </button>
+                </div>
+                
+                <div id="profile-content">
+                    <!-- Profile content will be dynamically loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Footer -->
+    <footer class="bg-shadow-gray/50 border-t border-mystic-silver/20 py-8 mt-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <div class="font-cinzel text-ancient-gold text-lg mb-2">Lovercraft Skindex</div>
+            <div class="text-mystic-silver text-sm">
+                © 2024 Lovercraft Skindex. All rights reserved. Compete with honor, collect with passion.
+            </div>
+        </div>
+    </footer>
+    
+    <script>
+        // Leaderboard specific functionality
+        const LeaderboardApp = {
+            currentCategory: 'collection',
+            currentPeriod: 'all',
+            currentPage: 1,
+            itemsPerPage: 50,
+            
+            mockData: {
+                collectors: [
+                    { rank: 1, username: 'EldritchMaster', avatar: 'resources/user-avatar-2.jpg', verifiedSkins: 2847, trades: 156, streak: 89, reputation: 4.9, joinDate: '2021-03-15' },
+                    { rank: 2, username: 'CosmicCollector', avatar: 'resources/user-avatar-3.jpg', verifiedSkins: 2634, trades: 142, streak: 76, reputation: 4.8, joinDate: '2021-05-22' },
+                    { rank: 3, username: 'MysticArchivist', avatar: 'resources/user-avatar-1.jpg', verifiedSkins: 2456, trades: 134, streak: 82, reputation: 4.7, joinDate: '2021-08-10' },
+                    { rank: 4, username: 'AncientHunter', avatar: 'resources/user-avatar-2.jpg', verifiedSkins: 2234, trades: 128, streak: 71, reputation: 4.6, joinDate: '2021-11-03' },
+                    { rank: 5, username: 'VoidWalker', avatar: 'resources/user-avatar-3.jpg', verifiedSkins: 2156, trades: 119, streak: 68, reputation: 4.5, joinDate: '2022-01-17' },
+                    { rank: 6, username: 'DreamSeeker', avatar: 'resources/user-avatar-1.jpg', verifiedSkins: 1987, trades: 107, streak: 65, reputation: 4.4, joinDate: '2022-03-09' },
+                    { rank: 7, username: 'StarCollector', avatar: 'resources/user-avatar-2.jpg', verifiedSkins: 1876, trades: 98, streak: 59, reputation: 4.3, joinDate: '2022-06-14' },
+                    { rank: 8, username: 'MysteryHunter', avatar: 'resources/user-avatar-3.jpg', verifiedSkins: 1765, trades: 89, streak: 54, reputation: 4.2, joinDate: '2022-09-28' },
+                    { rank: 9, username: 'LegendKeeper', avatar: 'resources/user-avatar-1.jpg', verifiedSkins: 1654, trades: 82, streak: 49, reputation: 4.1, joinDate: '2022-12-05' },
+                    { rank: 10, username: 'EternalSeeker', avatar: 'resources/user-avatar-2.jpg', verifiedSkins: 1543, trades: 76, streak: 43, reputation: 4.0, joinDate: '2023-02-18' },
+                    { rank: 47, username: 'Collector_Kane', avatar: 'resources/user-avatar-1.jpg', verifiedSkins: 847, trades: 156, streak: 23, reputation: 4.7, joinDate: '2023-07-22' }
+                ]
+            }
+        };
+        
+        // Initialize leaderboard
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeLeaderboard();
+        });
+        
+        function initializeLeaderboard() {
+            setupParticleBackground();
+            setupEventListeners();
+            renderLeaderboard();
+            initializeCharts();
+            setupScrollReveal();
+        }
+        
+        function setupParticleBackground() {
+            new p5(function(p) {
+                let particles = [];
+                let numParticles = 30;
+                
+                p.setup = function() {
+                    let canvas = p.createCanvas(p.windowWidth, p.windowHeight);
+                    canvas.parent('particle-bg');
+                    canvas.style('position', 'fixed');
+                    canvas.style('top', '0');
+                    canvas.style('left', '0');
+                    canvas.style('z-index', '-1');
+                    
+                    for (let i = 0; i < numParticles; i++) {
+                        particles.push({
+                            x: p.random(p.width),
+                            y: p.random(p.height),
+                            vx: p.random(-0.3, 0.3),
+                            vy: p.random(-0.3, 0.3),
+                            size: p.random(1, 2),
+                            opacity: p.random(0.1, 0.2)
+                        });
+                    }
+                };
+                
+                p.draw = function() {
+                    p.clear();
+                    
+                    for (let particle of particles) {
+                        particle.x += particle.vx;
+                        particle.y += particle.vy;
+                        
+                        if (particle.x < 0) particle.x = p.width;
+                        if (particle.x > p.width) particle.x = 0;
+                        if (particle.y < 0) particle.y = p.height;
+                        if (particle.y > p.height) particle.y = 0;
+                        
+                        p.fill(212, 175, 55, particle.opacity * 255);
+                        p.noStroke();
+                        p.circle(particle.x, particle.y, particle.size);
+                    }
+                };
+                
+                p.windowResized = function() {
+                    p.resizeCanvas(p.windowWidth, p.windowHeight);
+                };
+            });
+        }
+        
+        function setupEventListeners() {
+            // Category tabs
+            document.querySelectorAll('.category-tab').forEach(tab => {
+                tab.addEventListener('click', handleCategoryChange);
+            });
+            
+            // Time period filters
+            document.querySelectorAll('.time-filter').forEach(filter => {
+                filter.addEventListener('click', handleTimePeriodChange);
+            });
+            
+            // Search
+            const searchInput = document.getElementById('leaderboard-search');
+            if (searchInput) {
+                searchInput.addEventListener('input', handleSearch);
+            }
+            
+            // Load more button
+            const loadMoreBtn = document.getElementById('load-more');
+            if (loadMoreBtn) {
+                loadMoreBtn.addEventListener('click', loadMoreCollectors);
+            }
+        }
+        
+        function handleCategoryChange(event) {
+            document.querySelectorAll('.category-tab').forEach(tab => {
+                tab.classList.remove('tab-active');
+            });
+            
+            event.target.classList.add('tab-active');
+            LeaderboardApp.currentCategory = event.target.dataset.category;
+            renderLeaderboard();
+        }
+        
+        function handleTimePeriodChange(event) {
+            document.querySelectorAll('.time-filter').forEach(filter => {
+                filter.classList.remove('time-filter-active');
+            });
+            
+            event.target.classList.add('time-filter-active');
+            LeaderboardApp.currentPeriod = event.target.dataset.period;
+            renderLeaderboard();
+        }
+        
+        function handleSearch(event) {
+            const query = event.target.value.toLowerCase();
+            renderLeaderboard(query);
+        }
+        
+        function renderLeaderboard(searchQuery = '') {
+            const leaderboardList = document.getElementById('leaderboard-list');
+            if (!leaderboardList) return;
+            
+            let collectors = [...LeaderboardApp.mockData.collectors];
+            
+            // Apply search filter
+            if (searchQuery) {
+                collectors = collectors.filter(collector => 
+                    collector.username.toLowerCase().includes(searchQuery)
+                );
+            }
+            
+            // Sort based on current category
+            collectors.sort((a, b) => {
+                switch (LeaderboardApp.currentCategory) {
+                    case 'collection':
+                        return b.verifiedSkins - a.verifiedSkins;
+                    case 'trades':
+                        return b.trades - a.trades;
+                    case 'verification':
+                        return b.streak - a.streak;
+                    case 'reputation':
+                        return b.reputation - a.reputation;
+                    default:
+                        return b.verifiedSkins - a.verifiedSkins;
+                }
+            });
+            
+            leaderboardList.innerHTML = '';
+            
+            collectors.slice(0, 20).forEach((collector, index) => {
+                const entry = createLeaderboardEntry(collector, index + 1);
+                leaderboardList.appendChild(entry);
+            });
+            
+            // Animate entries
+            anime({
+                targets: '.ranking-animation',
+                opacity: [0, 1],
+                translateY: [30, 0],
+                delay: anime.stagger(100),
+                duration: 600,
+                easing: 'easeOutQuart'
+            });
+        }
+        
+        function createLeaderboardEntry(collector, rank) {
+            const entry = document.createElement('div');
+            entry.className = 'user-profile-card glass-card rounded-lg p-4 hover-lift cursor-pointer ranking-animation';
+            entry.onclick = () => openProfileModal(collector);
+            
+            const rankClass = rank === 1 ? 'rank-1' : rank === 2 ? 'rank-2' : rank === 3 ? 'rank-3' : 'rank-other';
+            
+            entry.innerHTML = `
+                <div class="flex items-center space-x-4">
+                    <div class="rank-badge ${rankClass}">
+                        #${rank}
+                    </div>
+                    <img src="${collector.avatar}" alt="${collector.username}" class="w-12 h-12 rounded-full border-2 border-ancient-gold">
+                    <div class="flex-1">
+                        <h3 class="font-cinzel text-lg font-bold text-ancient-gold">${collector.username}</h3>
+                        <div class="flex items-center space-x-4 text-sm text-mystic-silver">
+                            <span>🎒 ${collector.verifiedSkins} skins</span>
+                            <span>🤝 ${collector.trades} trades</span>
+                            <span>✅ ${collector.streak} day streak</span>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <div class="flex items-center space-x-1 text-ancient-gold">
+                            <span>⭐</span>
+                            <span class="font-bold">${collector.reputation}</span>
+                        </div>
+                        <div class="text-xs text-mystic-silver mt-1">
+                            Joined ${new Date(collector.joinDate).getFullYear()}
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            return entry;
+        }
+        
+        function openProfileModal(collector) {
+            const modal = document.getElementById('profile-modal');
+            const content = document.getElementById('profile-content');
+            
+            if (!modal || !content) return;
+            
+            content.innerHTML = `
+                <div class="flex items-center space-x-6 mb-6">
+                    <img src="${collector.avatar}" alt="${collector.username}" class="w-24 h-24 rounded-full border-3 border-ancient-gold">
+                    <div>
+                        <h2 class="font-cinzel text-2xl font-bold text-ancient-gold mb-2">${collector.username}</h2>
+                        <div class="flex items-center space-x-4 text-mystic-silver">
+                            <span>Member since ${new Date(collector.joinDate).toLocaleDateString()}</span>
+                            <span>•</span>
+                            <span>⭐ ${collector.reputation} Rating</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-ancient-gold">${collector.verifiedSkins}</div>
+                        <div class="text-sm text-mystic-silver">Verified Skins</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-ancient-gold">${collector.trades}</div>
+                        <div class="text-sm text-mystic-silver">Trades</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-ancient-gold">${collector.streak}</div>
+                        <div class="text-sm text-mystic-silver">Day Streak</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-ancient-gold">#${collector.rank}</div>
+                        <div class="text-sm text-mystic-silver">Global Rank</div>
+                    </div>
+                </div>
+                
+                <div class="space-y-4">
+                    <h3 class="font-cinzel text-lg font-bold text-ancient-gold">Recent Achievements</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="flex items-center space-x-3 achievement-glow p-3 rounded glass-card">
+                            <img src="resources/achievement-badge.png" alt="Achievement" class="w-8 h-8">
+                            <div>
+                                <div class="text-sm text-ancient-gold font-medium">Trade Master</div>
+                                <div class="text-xs text-mystic-silver">50 successful trades</div>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-3 p-3 rounded glass-card">
+                            <img src="resources/achievement-badge.png" alt="Achievement" class="w-8 h-8 opacity-60">
+                            <div>
+                                <div class="text-sm text-mystic-silver">Verification Streak</div>
+                                <div class="text-xs text-mystic-silver">30 days ongoing</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex space-x-3 mt-6">
+                    <button onclick="window.location.href='trade-center.html'" class="flex-1 bg-ancient-gold hover:bg-ancient-gold/80 text-deep-void px-4 py-2 rounded transition-colors">
+                        Start Trade
+                    </button>
+                    <button onclick="showNotification('Friend request sent!', 'success')" class="flex-1 bg-cosmic-teal hover:bg-cosmic-teal/80 text-ghost-white px-4 py-2 rounded transition-colors">
+                        Add Friend
+                    </button>
+                </div>
+            `;
+            
+            modal.classList.remove('hidden');
+            
+            anime({
+                targets: modal.querySelector('.glass-card'),
+                scale: [0.8, 1],
+                opacity: [0, 1],
+                duration: 300,
+                easing: 'easeOutQuart'
+            });
+        }
+        
+        function closeProfileModal() {
+            const modal = document.getElementById('profile-modal');
+            if (modal) {
+                modal.classList.add('hidden');
+            }
+        }
+        
+        function loadMoreCollectors() {
+            showNotification('Loading more collectors...', 'info');
+            // This would load additional data in a real implementation
+        }
+        
+        function initializeCharts() {
+            // Category distribution chart
+            const categoryChart = echarts.init(document.getElementById('category-chart'));
+            const categoryOption = {
+                backgroundColor: 'transparent',
+                textStyle: {
+                    color: '#f8f8ff'
+                },
+                tooltip: {
+                    trigger: 'item',
+                    backgroundColor: 'rgba(45, 27, 61, 0.9)',
+                    borderColor: '#d4af37',
+                    textStyle: { color: '#f8f8ff' }
+                },
+                series: [{
+                    type: 'pie',
+                    radius: '70%',
+                    data: [
+                        { value: 35, name: 'VIP Items', itemStyle: { color: '#d4af37' } },
+                        { value: 25, name: 'Purge Masks', itemStyle: { color: '#008b8b' } },
+                        { value: 20, name: 'Season 5', itemStyle: { color: '#c0c0c0' } },
+                        { value: 15, name: 'Mythic Sets', itemStyle: { color: '#8b0000' } },
+                        { value: 5, name: 'Others', itemStyle: { color: '#2a2a2a' } }
+                    ],
+                    emphasis: {
+                        itemStyle: {
+                            shadowBlur: 10,
+                            shadowOffsetX: 0,
+                            shadowColor: 'rgba(212, 175, 55, 0.5)'
+                        }
+                    }
+                }]
+            };
+            categoryChart.setOption(categoryOption);
+            
+            // Activity chart
+            const activityChart = echarts.init(document.getElementById('activity-chart'));
+            const activityOption = {
+                backgroundColor: 'transparent',
+                textStyle: {
+                    color: '#f8f8ff'
+                },
+                tooltip: {
+                    trigger: 'axis',
+                    backgroundColor: 'rgba(45, 27, 61, 0.9)',
+                    borderColor: '#d4af37',
+                    textStyle: { color: '#f8f8ff' }
+                },
+                xAxis: {
+                    type: 'category',
+                    data: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                    axisLine: { lineStyle: { color: '#c0c0c0' } },
+                    axisLabel: { color: '#c0c0c0' }
+                },
+                yAxis: {
+                    type: 'value',
+                    axisLine: { lineStyle: { color: '#c0c0c0' } },
+                    axisLabel: { color: '#c0c0c0' },
+                    splitLine: { lineStyle: { color: '#2a2a2a' } }
+                },
+                series: [{
+                    data: [120, 200, 150, 80, 70, 110, 130],
+                    type: 'line',
+                    smooth: true,
+                    lineStyle: { color: '#d4af37', width: 3 },
+                    itemStyle: { color: '#d4af37' },
+                    areaStyle: {
+                        color: {
+                            type: 'linear',
+                            x: 0, y: 0, x2: 0, y2: 1,
+                            colorStops: [
+                                { offset: 0, color: 'rgba(212, 175, 55, 0.3)' },
+                                { offset: 1, color: 'rgba(212, 175, 55, 0.1)' }
+                            ]
+                        }
+                    }
+                }]
+            };
+            activityChart.setOption(activityOption);
+            
+            // Make charts responsive
+            window.addEventListener('resize', () => {
+                categoryChart.resize();
+                activityChart.resize();
+            });
+        }
+        
+        function setupScrollReveal() {
+            const observerOptions = {
+                threshold: 0.1,
+                rootMargin: '0px 0px -50px 0px'
+            };
+            
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('revealed');
+                    }
+                });
+            }, observerOptions);
+            
+            document.querySelectorAll('.scroll-reveal').forEach(el => {
+                observer.observe(el);
+            });
+        }
+        
+        function showNotification(message, type = 'info') {
+            // Reuse the notification system from main.js
+            if (window.LovercraftSkindex && window.LovercraftSkindex.showNotification) {
+                window.LovercraftSkindex.showNotification(message, type);
+            } else {
+                console.log(`${type.toUpperCase()}: ${message}`);
+            }
+        }
+        
+        console.log('Leaderboard initialized successfully');
+    </script>
+    
+    <script src="main.js"></script>
+</body>
+</html>
